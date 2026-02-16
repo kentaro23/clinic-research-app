@@ -41,13 +41,45 @@ create table if not exists public.clinics (
 create table if not exists public.bookings (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
-  clinic_id uuid not null references public.clinics(id) on delete cascade,
+  clinic_id text not null,
+  clinic_name text not null,
   booking_type text not null check (booking_type in ('visit', 'online')),
   date date not null,
   time text not null,
   dept text not null,
   status text not null default '確定',
   concern text,
+  created_at timestamptz not null default now()
+);
+
+-- Compatibility migration for older schema
+alter table if exists public.bookings
+  drop constraint if exists bookings_clinic_id_fkey;
+alter table if exists public.bookings
+  alter column clinic_id type text using clinic_id::text;
+alter table if exists public.bookings
+  add column if not exists clinic_name text;
+
+-- Reviews
+create table if not exists public.reviews (
+  id uuid primary key default gen_random_uuid(),
+  clinic_id text not null,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  author text not null,
+  av text not null,
+  age text not null default '',
+  date date not null,
+  rating integer not null check (rating between 1 and 5),
+  dept text not null,
+  did integer,
+  title text not null,
+  body text not null,
+  tags text[] not null default array[]::text[],
+  helpful integer not null default 0,
+  dr integer not null default 0,
+  fr integer not null default 0,
+  wr integer not null default 0,
+  reply text,
   created_at timestamptz not null default now()
 );
 
@@ -91,6 +123,7 @@ for each row execute function public.touch_updated_at();
 alter table public.profiles enable row level security;
 alter table public.clinics enable row level security;
 alter table public.bookings enable row level security;
+alter table public.reviews enable row level security;
 alter table public.review_reports enable row level security;
 alter table public.audit_logs enable row level security;
 
@@ -119,12 +152,21 @@ for select using (
   auth.uid() = user_id
   or exists (
     select 1 from public.clinics c
-    where c.id = clinic_id and c.owner_user_id = auth.uid()
+    where c.id::text = clinic_id and c.owner_user_id = auth.uid()
   )
 );
 
 drop policy if exists "bookings_user_insert" on public.bookings;
 create policy "bookings_user_insert" on public.bookings
+for insert with check (auth.uid() = user_id);
+
+-- Reviews policies
+drop policy if exists "reviews_public_read" on public.reviews;
+create policy "reviews_public_read" on public.reviews
+for select using (true);
+
+drop policy if exists "reviews_insert_self" on public.reviews;
+create policy "reviews_insert_self" on public.reviews
 for insert with check (auth.uid() = user_id);
 
 -- Review reports policies

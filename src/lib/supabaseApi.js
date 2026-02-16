@@ -48,6 +48,14 @@ export const insertBooking = async (booking) => {
   return supabase.from("bookings").insert(booking).select().single();
 };
 
+export const listReviews = async () => {
+  return supabase.from("reviews").select("*").order("created_at", { ascending: false });
+};
+
+export const insertReview = async (review) => {
+  return supabase.from("reviews").insert(review).select().single();
+};
+
 export const insertReviewReport = async (report) => {
   return supabase.from("review_reports").insert(report);
 };
@@ -55,4 +63,3 @@ export const insertReviewReport = async (report) => {
 export const insertAuditLog = async (payload) => {
   return supabase.from("audit_logs").insert(payload);
 };
-

@@ -5,9 +5,11 @@ import {
   getProfileById,
   insertAuditLog,
   insertBooking,
+  insertReview,
   insertReviewReport,
   listBookings,
   listClinicProfiles,
+  listReviews,
   signInWithEmail,
   signOutSession,
   signUpWithEmail,
@@ -23,6 +25,7 @@ const STORAGE_KEYS = {
   clinicProfiles: "clinic_app_clinic_profiles_v1",
   reviewReports: "clinic_app_review_reports_v1",
   auditLogs: "clinic_app_audit_logs_v1",
+  reviews: "clinic_app_reviews_v1",
 };
 
 const readJSON = (key, fallback) => {
@@ -520,13 +523,21 @@ function NotifPanel({ bookings = [] }) {
 /* ═══════════════════════════════════════════
    REVIEW FORM
 ═══════════════════════════════════════════ */
-function ReviewForm({ hospital, user, onClose }) {
+function ReviewForm({ hospital, user, onClose, onSubmit }) {
   const [step, setStep] = useState(1);
   const [f, setF] = useState({dept:"",did:null,overall:0,dr:0,fr:0,wr:0,title:"",body:"",tags:[],anon:!user});
   const [done, setDone] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const set = (k,v)=>setF(p=>({...p,[k]:v}));
   const toggleTag = t=>set("tags",f.tags.includes(t)?f.tags.filter(x=>x!==t):[...f.tags,t]);
   const deptDocs = doctors.filter(d=>d.hid===hospital.id&&(!f.dept||d.dept===f.dept));
+  const submitReview = async () => {
+    if (!f.dept || !f.overall || !f.title.trim() || !f.body.trim()) return;
+    setSubmitting(true);
+    const ok = await onSubmit?.(f);
+    setSubmitting(false);
+    if (ok) setDone(true);
+  };
   if (done) return <div style={{textAlign:"center",padding:"32px 0"}}><div style={{fontSize:52,marginBottom:12}}>✅</div><p style={{fontWeight:900,fontSize:17,color:C.text,marginBottom:4}}>投稿ありがとうございます！</p><p style={{fontSize:13,color:C.textM}}>確認後に公開されます（通常1〜2営業日）</p></div>;
   const inp = {width:"100%",padding:"11px 14px",borderRadius:12,border:`1.5px solid ${C.border}`,fontSize:13,outline:"none",boxSizing:"border-box",...ff};
   return <div>
@@ -572,7 +583,7 @@ function ReviewForm({ hospital, user, onClose }) {
     </div>}
     <div style={{display:"flex",gap:8,marginTop:20}}>
       {step>1&&<Btn onClick={()=>setStep(s=>s-1)} variant="outline" style={{flex:1,padding:12,borderRadius:14,fontSize:14}}>← 戻る</Btn>}
-      <Btn onClick={()=>step<3?setStep(s=>s+1):setDone(true)} style={{flex:2,padding:12,borderRadius:14,fontSize:14}}>{step<3?"次へ →":"投稿する ✓"}</Btn>
+      <Btn onClick={()=>step<3?setStep(s=>s+1):submitReview()} disabled={submitting} style={{flex:2,padding:12,borderRadius:14,fontSize:14}}>{step<3?"次へ →":(submitting?"投稿中...":"投稿する ✓")}</Btn>
     </div>
   </div>;
 }
@@ -672,12 +683,12 @@ function HospitalCard({ h, onClick, isFav, onFavToggle, user }) {
 /* ═══════════════════════════════════════════
    HOSPITAL DETAIL
 ═══════════════════════════════════════════ */
-function HospitalDetail({ hospital, onBack, onDoctorClick, isFav, onFavToggle, user, onCreateBooking, onRequireLogin, onReportReview }) {
+function HospitalDetail({ hospital, onBack, onDoctorClick, isFav, onFavToggle, user, onCreateBooking, onRequireLogin, onReportReview, onCreateReview }) {
   const [tab, setTab] = useState("reviews");
   const [showForm, setShowForm] = useState(false);
   const [modal, setModal] = useState(null); // "book" | "online"
   const hospDocs = doctors.filter(d=>d.hid===hospital.id);
-  const avg = k=>hospital.reviews.reduce((a,r)=>a+r[k],0)/hospital.reviews.length;
+  const avg = k=>hospital.reviews.length ? hospital.reviews.reduce((a,r)=>a+r[k],0)/hospital.reviews.length : 0;
 
   return <div>
     {modal==="book"&&<Sheet title="📅 ネット予約" onClose={()=>setModal(null)}><Booking hospital={hospital} user={user} onCreateBooking={onCreateBooking} onRequireLogin={onRequireLogin}/></Sheet>}
@@ -733,7 +744,11 @@ function HospitalDetail({ hospital, onBack, onDoctorClick, isFav, onFavToggle, u
       </div>
       {showForm&&<div style={{background:C.white,borderRadius:16,padding:18,marginBottom:14,border:`2px solid ${C.green}`}}>
         <div style={{fontWeight:800,fontSize:14,color:C.text,marginBottom:14}}>口コミを投稿する</div>
-        <ReviewForm hospital={hospital} user={user} onClose={()=>setShowForm(false)}/>
+        <ReviewForm hospital={hospital} user={user} onClose={()=>setShowForm(false)} onSubmit={async (form)=>{
+          const ok = await onCreateReview?.(hospital, form);
+          if (ok) setShowForm(false);
+          return ok;
+        }}/>
       </div>}
       <div style={{display:"flex",flexDirection:"column",gap:10}}>
         {hospital.reviews.map(r=><ReviewCard key={r.id} review={r} onDoctorClick={onDoctorClick} onReport={(review)=>onReportReview?.(review, hospital)}/>)}
@@ -792,8 +807,8 @@ function HospitalDetail({ hospital, onBack, onDoctorClick, isFav, onFavToggle, u
 /* ═══════════════════════════════════════════
    DOCTOR PROFILE MODAL CONTENT
 ═══════════════════════════════════════════ */
-function DoctorProfile({ doc }) {
-  const reviews = hospitals.flatMap(h=>h.reviews.filter(r=>r.did===doc.id));
+function DoctorProfile({ doc, hospitalsData }) {
+  const reviews = hospitalsData.flatMap(h=>h.reviews.filter(r=>r.did===doc.id));
   return <div>
     <div style={{display:"flex",gap:14,marginBottom:18,padding:14,background:C.greenLL,borderRadius:14,border:`1px solid ${C.greenL}`}}>
       <Av emoji={doc.photo} size={60} bg="linear-gradient(135deg,#6ee7b7,#34d399)"/>
@@ -834,9 +849,9 @@ function DoctorProfile({ doc }) {
 /* ═══════════════════════════════════════════
    MYPAGE
 ═══════════════════════════════════════════ */
-function MyPage({ user, favs, bookings, onUnfav, onLogout, onHospitalClick }) {
+function MyPage({ user, favs, bookings, myReviews, onUnfav, onLogout, onHospitalClick }) {
   const [tab, setTab] = useState("fav");
-  const myRevs = hospitals.flatMap(h=>h.reviews.filter(r=>r.uid===user.id));
+  const myRevs = myReviews;
   const sortedBookings = [...bookings].sort((a, b) => (a.date + a.time < b.date + b.time ? 1 : -1));
   return <div>
     <div style={{background:G,borderRadius:20,padding:20,marginBottom:14,color:C.white}}>
@@ -1057,6 +1072,7 @@ export default function App() {
   const [bookings, setBookings] = useState(() => readJSON(STORAGE_KEYS.bookings, []));
   const [clinicProfiles, setClinicProfiles] = useState(() => readJSON(STORAGE_KEYS.clinicProfiles, []));
   const [reviewReports, setReviewReports] = useState(() => readJSON(STORAGE_KEYS.reviewReports, []));
+  const [reviews, setReviews] = useState(() => readJSON(STORAGE_KEYS.reviews, []));
   const [mode, setMode] = useState("patient");
   const [view, setView] = useState("home");
   const [search, setSearch] = useState("");
@@ -1077,9 +1093,20 @@ export default function App() {
   const [locationError, setLocationError] = useState("");
   const [mounted, setMounted] = useState(false);
   const isClinic = mode==="clinic";
-  const allHospitals = [...hospitals, ...clinicProfiles.map(toHospitalFromProfile)];
+  const baseHospitals = [...hospitals, ...clinicProfiles.map(toHospitalFromProfile)];
+  const allHospitals = baseHospitals.map((h) => {
+    const extra = reviews.filter((r) => String(r.clinicId) === String(h.id));
+    const merged = [...h.reviews, ...extra];
+    const avgRating = merged.length > 0 ? merged.reduce((a, r) => a + r.rating, 0) / merged.length : h.rating;
+    return {
+      ...h,
+      reviews: merged,
+      cnt: merged.length,
+      rating: Number.isFinite(avgRating) ? Number(avgRating.toFixed(1)) : h.rating,
+    };
+  });
   const clinicProfile = user?.role === "clinic" ? clinicProfiles.find((p) => p.ownerUserId === user.id) : null;
-  const clinicBookings = clinicProfile ? bookings.filter((b) => b.hospitalId === clinicProfile.id) : [];
+  const clinicBookings = clinicProfile ? bookings.filter((b) => String(b.hospitalId) === String(clinicProfile.id)) : [];
   const clinicReports = clinicProfile ? reviewReports.filter((r) => r.clinicId === String(clinicProfile.id)) : [];
 
   useEffect(()=>{setTimeout(()=>setMounted(true),80);},[]);
@@ -1127,7 +1154,7 @@ export default function App() {
           id: b.id,
           userId: b.user_id,
           hospitalId: b.clinic_id,
-          hospitalName: allHospitals.find((h) => h.id === b.clinic_id)?.name || "医療機関",
+          hospitalName: allHospitals.find((h) => String(h.id) === String(b.clinic_id))?.name || b.clinic_name || "医療機関",
           type: b.booking_type,
           date: b.date,
           time: b.time,
@@ -1137,6 +1164,30 @@ export default function App() {
           createdAt: b.created_at,
         }));
         setBookings(normalized);
+      }
+      const { data: cloudReviews } = await listReviews();
+      if (cloudReviews) {
+        const normalizedReviews = cloudReviews.map((r) => ({
+          id: r.id,
+          clinicId: r.clinic_id,
+          uid: r.user_id,
+          author: r.author,
+          av: r.av,
+          age: r.age || "",
+          date: r.date,
+          rating: r.rating,
+          dept: r.dept,
+          did: r.did,
+          title: r.title,
+          body: r.body,
+          tags: r.tags || [],
+          helpful: r.helpful || 0,
+          dr: r.dr || 0,
+          fr: r.fr || 0,
+          wr: r.wr || 0,
+          reply: r.reply || undefined,
+        }));
+        setReviews(normalizedReviews);
       }
     })();
   }, []);
@@ -1180,6 +1231,13 @@ export default function App() {
     }
   };
   const toClientUser = (u) => ({ id: u.id, name: u.name, email: u.email, role: u.role, photo: u.photo });
+  const normalizeAuthError = (message = "") => {
+    const m = message.toLowerCase();
+    if (m.includes("email not confirmed")) return "メール確認が未完了です。受信した確認メールのリンクを開いてからログインしてください。";
+    if (m.includes("invalid login credentials")) return "メールアドレスまたはパスワードが違います。";
+    if (m.includes("user already registered")) return "このメールアドレスは既に登録済みです。ログインしてください。";
+    return message || "認証に失敗しました";
+  };
   const logAction = async (action, metadata = {}) => {
     const entry = {
       id: createId("log"),
@@ -1206,9 +1264,12 @@ export default function App() {
     if (!isSupabaseEnabled && users.some((u) => u.email.toLowerCase() === email.toLowerCase())) return { ok: false, error: "このメールアドレスは既に登録済みです" };
     if (isSupabaseEnabled) {
       const { data, error } = await signUpWithEmail({ email: email.toLowerCase(), pass });
-      if (error) return { ok: false, error: error.message };
+      if (error) return { ok: false, error: normalizeAuthError(error.message) };
       const uid = data.user?.id;
       if (!uid) return { ok: false, error: "ユーザー作成に失敗しました" };
+      if (!data.session) {
+        return { ok: false, error: "確認メールを送信しました。メールのリンクを開いてからログインしてください。" };
+      }
       await upsertProfile({
         id: uid,
         email: email.toLowerCase(),
@@ -1240,12 +1301,40 @@ export default function App() {
 
   const login = async ({ email, pass }) => {
     if (isSupabaseEnabled) {
-      const { data, error } = await signInWithEmail({ email: email.toLowerCase(), pass });
-      if (error) return { ok: false, error: "メールアドレスまたはパスワードが違います" };
+      const normalizedEmail = email.toLowerCase();
+      let { data, error } = await signInWithEmail({ email: normalizedEmail, pass });
+      if (error) {
+        const localUser = users.find((u) => u.email.toLowerCase() === normalizedEmail && u.passHash === passHash(pass));
+        if (localUser) {
+          const up = await signUpWithEmail({ email: normalizedEmail, pass });
+          if (up.error && !String(up.error.message || "").toLowerCase().includes("already")) {
+            return { ok: false, error: normalizeAuthError(up.error.message) };
+          }
+          const retry = await signInWithEmail({ email: normalizedEmail, pass });
+          if (retry.error) return { ok: false, error: normalizeAuthError(retry.error.message) };
+          data = retry.data;
+        } else {
+          return { ok: false, error: normalizeAuthError(error.message) };
+        }
+      }
       const uid = data.user?.id;
       if (!uid) return { ok: false, error: "ログインに失敗しました" };
-      const { data: profile } = await getProfileById(uid);
-      if (!profile) return { ok: false, error: "プロフィールが見つかりません" };
+      let { data: profile } = await getProfileById(uid);
+      if (!profile) {
+        const localUser = users.find((u) => u.email.toLowerCase() === normalizedEmail);
+        const fallbackName = localUser?.name || normalizedEmail.split("@")[0];
+        const fallbackRole = localUser?.role || "patient";
+        await upsertProfile({
+          id: uid,
+          email: normalizedEmail,
+          display_name: fallbackName,
+          role: fallbackRole,
+          avatar: fallbackRole === "clinic" ? "🏥" : "👤",
+        });
+        const profRes = await getProfileById(uid);
+        profile = profRes.data;
+      }
+      if (!profile) return { ok: false, error: "プロフィール作成に失敗しました。時間をおいて再試行してください。" };
       setUser({ id: profile.id, name: profile.display_name, email: profile.email, role: profile.role, photo: profile.avatar });
       await logAction("login", {});
       return { ok: true };
@@ -1294,7 +1383,8 @@ export default function App() {
     if (isSupabaseEnabled) {
       const { error } = await insertBooking({
         user_id: user.id,
-        clinic_id: payload.hospitalId,
+        clinic_id: String(payload.hospitalId),
+        clinic_name: payload.hospitalName,
         booking_type: payload.type,
         date: payload.date,
         time: payload.time,
@@ -1309,7 +1399,7 @@ export default function App() {
             id: b.id,
             userId: b.user_id,
             hospitalId: b.clinic_id,
-            hospitalName: allHospitals.find((h) => h.id === b.clinic_id)?.name || payload.hospitalName || "医療機関",
+            hospitalName: allHospitals.find((h) => String(h.id) === String(b.clinic_id))?.name || b.clinic_name || payload.hospitalName || "医療機関",
             type: b.booking_type,
             date: b.date,
             time: b.time,
@@ -1334,6 +1424,60 @@ export default function App() {
     setBookings(next);
     writeJSON(STORAGE_KEYS.bookings, next);
     await logAction("booking_create", { hospitalId: payload.hospitalId, type: payload.type });
+  };
+
+  const createReview = async (hospital, form) => {
+    if (!user) return false;
+    const newReview = {
+      id: createId("rv"),
+      clinicId: String(hospital.id),
+      uid: user.id,
+      author: form.anon ? "匿名ユーザー" : user.name,
+      av: form.anon ? "匿" : (user.name?.slice(0, 1) || "匿"),
+      age: "非公開",
+      date: new Date().toISOString().slice(0, 10),
+      rating: form.overall,
+      dept: form.dept,
+      did: form.did,
+      title: form.title.trim(),
+      body: form.body.trim(),
+      tags: form.tags,
+      helpful: 0,
+      dr: form.dr,
+      fr: form.fr,
+      wr: form.wr,
+    };
+
+    if (isSupabaseEnabled) {
+      const { error } = await insertReview({
+        clinic_id: newReview.clinicId,
+        user_id: user.id,
+        author: newReview.author,
+        av: newReview.av,
+        age: newReview.age,
+        date: newReview.date,
+        rating: newReview.rating,
+        dept: newReview.dept,
+        did: newReview.did,
+        title: newReview.title,
+        body: newReview.body,
+        tags: newReview.tags,
+        helpful: newReview.helpful,
+        dr: newReview.dr,
+        fr: newReview.fr,
+        wr: newReview.wr,
+      });
+      if (error) {
+        alert("口コミ投稿に失敗しました。しばらくして再試行してください。");
+        return false;
+      }
+    }
+
+    const nextReviews = [newReview, ...reviews];
+    setReviews(nextReviews);
+    writeJSON(STORAGE_KEYS.reviews, nextReviews);
+    await logAction("review_create", { clinicId: String(hospital.id), rating: form.overall });
+    return true;
   };
 
   const reportReview = async (review, hospital) => {
@@ -1439,7 +1583,7 @@ export default function App() {
       {showAuth&&<Auth onLogin={login} onSignup={signup} onSocialLogin={socialLogin} onClose={()=>setShowAuth(false)}/>}
 
       {/* Doctor modal */}
-      {docModal&&<Sheet title="医師プロフィール" onClose={()=>setDocModal(null)}><DoctorProfile doc={docModal}/></Sheet>}
+      {docModal&&<Sheet title="医師プロフィール" onClose={()=>setDocModal(null)}><DoctorProfile doc={docModal} hospitalsData={allHospitals}/></Sheet>}
 
       {/* Notif panel */}
       {showNotif&&<Sheet title="🔔 通知" onClose={()=>setShowNotif(false)}><NotifPanel bookings={userBookings}/></Sheet>}
@@ -1509,11 +1653,11 @@ export default function App() {
         {legalPage ? (
           <LegalPage type={legalPage} onBack={()=>setLegalPage(null)} />
         ) : view==="mypage"&&user ? (
-          <MyPage user={user} favs={favs} bookings={userBookings} onUnfav={id=>setFavs(p=>p.filter(f=>f.id!==id))} onLogout={async ()=>{await logAction("logout", {});await clearSession();setUser(null);setView("home");}} onHospitalClick={openHospital}/>
+          <MyPage user={user} favs={favs} bookings={userBookings} myReviews={reviews.filter((r)=>r.uid===user.id)} onUnfav={id=>setFavs(p=>p.filter(f=>f.id!==id))} onLogout={async ()=>{await logAction("logout", {});await clearSession();setUser(null);setView("home");}} onHospitalClick={openHospital}/>
         ) : isClinic ? (
           <ClinicDash user={user} clinicProfile={clinicProfile} clinicBookings={clinicBookings} clinicReports={clinicReports} onSaveClinicProfile={saveClinicProfile} onDoctorClick={setDocModal}/>
         ) : view==="detail"&&selected ? (
-          <HospitalDetail hospital={selected} onBack={()=>{setSelected(null);setView("home");}} onDoctorClick={setDocModal} isFav={isFav(selected)} onFavToggle={toggleFav} user={user} onCreateBooking={createBooking} onRequireLogin={()=>setShowAuth(true)} onReportReview={reportReview}/>
+          <HospitalDetail hospital={allHospitals.find((h)=>String(h.id)===String(selected.id)) || selected} onBack={()=>{setSelected(null);setView("home");}} onDoctorClick={setDocModal} isFav={isFav(selected)} onFavToggle={toggleFav} user={user} onCreateBooking={createBooking} onRequireLogin={()=>setShowAuth(true)} onReportReview={reportReview} onCreateReview={createReview}/>
         ) : (
           <div>
             {/* Map */}

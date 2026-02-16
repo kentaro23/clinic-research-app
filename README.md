@@ -21,6 +21,7 @@ npm run dev
 ## Supabase 本番設定
 1. Supabase プロジェクトを作成
 2. SQL Editor で `supabase/schema.sql` を実行
+  - 既存テーブルがある場合も、同ファイルを再実行して移行します
 3. `.env` を作成して以下を設定
 
 ```bash
@@ -32,6 +33,11 @@ VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
 ```bash
 npm run dev
 ```
+
+5. Auth 設定（重要）
+- Supabase `Authentication > Providers > Email`
+- まずは検証のため `Confirm email` を OFF にするとログイン詰まりを避けられます
+- 本番運用で ON にする場合は、確認メール文面とリダイレクトURLを設定してください
 
 `VITE_SUPABASE_*` が未設定の場合はローカル保存モードで動作します。
 
