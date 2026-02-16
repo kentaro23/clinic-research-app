@@ -5,6 +5,7 @@ const STORAGE_KEYS = {
   session: "clinic_app_session_v1",
   bookings: "clinic_app_bookings_v1",
   favorites: "clinic_app_favorites_v1",
+  clinicProfiles: "clinic_app_clinic_profiles_v1",
 };
 
 const readJSON = (key, fallback) => {
@@ -123,6 +124,34 @@ const hospitals = [
   },
 ];
 
+const DEPT_OPTIONS = ALL_DEPTS.filter((d) => d !== "すべて");
+const toHospitalFromProfile = (profile) => ({
+  id: profile.id,
+  name: profile.name,
+  short: profile.short || profile.name.slice(0, 8),
+  address: profile.address,
+  lat: Number(profile.lat) || 35.6812,
+  lng: Number(profile.lng) || 139.7671,
+  tel: profile.tel || "未設定",
+  hours: profile.hours || "未設定",
+  depts: profile.depts?.length ? profile.depts : ["内科"],
+  rating: 0,
+  cnt: 0,
+  wait: "予約制",
+  parking: !!profile.parking,
+  nightService: !!profile.nightService,
+  female: !!profile.female,
+  online: !!profile.online,
+  verified: false,
+  today: true,
+  emoji: "🏥",
+  desc: profile.desc || "施設情報を準備中です。",
+  access: profile.access || "アクセス情報を準備中です。",
+  beds: Number(profile.beds) || 0,
+  founded: Number(profile.founded) || new Date().getFullYear(),
+  reviews: [],
+});
+
 /* ═══════════════════════════════════════════
    DESIGN SYSTEM
 ═══════════════════════════════════════════ */
@@ -202,9 +231,21 @@ function Sheet({ children, title, onClose, wide }) {
 /* ═══════════════════════════════════════════
    MAP VIEW  (static SVG map — no API key needed)
 ═══════════════════════════════════════════ */
-function MapView({ hospitals, onSelect }) {
-  // Bounding box for Tokyo area
-  const minLat=35.65, maxLat=35.70, minLng=139.69, maxLng=139.78;
+function MapView({ hospitals, onSelect, userLocation, onLocate, locationError }) {
+  const points = [
+    ...hospitals.map((h) => ({ lat: h.lat, lng: h.lng })),
+    ...(userLocation ? [userLocation] : []),
+  ];
+  const minLatRaw = Math.min(...points.map((p) => p.lat));
+  const maxLatRaw = Math.max(...points.map((p) => p.lat));
+  const minLngRaw = Math.min(...points.map((p) => p.lng));
+  const maxLngRaw = Math.max(...points.map((p) => p.lng));
+  const latPad = Math.max((maxLatRaw - minLatRaw) * 0.2, 0.01);
+  const lngPad = Math.max((maxLngRaw - minLngRaw) * 0.2, 0.01);
+  const minLat = minLatRaw - latPad;
+  const maxLat = maxLatRaw + latPad;
+  const minLng = minLngRaw - lngPad;
+  const maxLng = maxLngRaw + lngPad;
   const W=340, H=200;
   const px = lng => ((lng-minLng)/(maxLng-minLng))*W;
   const py = lat => (1-(lat-minLat)/(maxLat-minLat))*H;
@@ -213,7 +254,9 @@ function MapView({ hospitals, onSelect }) {
     <div style={{padding:"8px 12px",background:"white",borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",gap:6}}>
       <span style={{fontSize:14}}>🗺️</span>
       <span style={{fontSize:12,fontWeight:700,color:C.text}}>現在地周辺の医療機関</span>
-      <Badge green>東京都心エリア</Badge>
+      <button onClick={onLocate} style={{marginLeft:"auto",fontSize:11,padding:"4px 10px",borderRadius:99,border:`1px solid ${C.border}`,background:"#f8fafc",color:C.text,cursor:"pointer",...ff}}>
+        📍 現在地を取得
+      </button>
     </div>
     <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{display:"block",background:"linear-gradient(180deg,#e8f5e9 0%,#f1f8e9 100%)"}}>
       {/* Grid lines */}
@@ -235,12 +278,14 @@ function MapView({ hospitals, onSelect }) {
         </g>;
       })}
       {/* Current location */}
-      <circle cx={px(139.735)} cy={py(35.672)} r={8} fill="#3b82f6" opacity={.8}/>
-      <circle cx={px(139.735)} cy={py(35.672)} r={14} fill="#3b82f6" opacity={.2}/>
-      <text x={px(139.735)} y={py(35.672)+32} textAnchor="middle" fontSize={8} fill="#1e40af" fontWeight="bold">現在地</text>
+      {userLocation && <>
+        <circle cx={px(userLocation.lng)} cy={py(userLocation.lat)} r={8} fill="#3b82f6" opacity={.9}/>
+        <circle cx={px(userLocation.lng)} cy={py(userLocation.lat)} r={16} fill="#3b82f6" opacity={.2}/>
+        <text x={px(userLocation.lng)} y={py(userLocation.lat)+32} textAnchor="middle" fontSize={8} fill="#1e40af" fontWeight="bold">現在地</text>
+      </>}
     </svg>
     <div style={{padding:"6px 12px",background:"white",borderTop:`1px solid ${C.border}`,fontSize:10,color:C.gray}}>
-      ※ 概略図です。実際の地図はGoogleマップ等でご確認ください
+      {userLocation ? `現在地: 緯度 ${userLocation.lat.toFixed(4)} / 経度 ${userLocation.lng.toFixed(4)}` : (locationError || "現在地は未取得です。ブラウザの位置情報許可が必要です。")}
     </div>
   </div>;
 }
@@ -833,24 +878,84 @@ function MyPage({ user, favs, bookings, onUnfav, onLogout, onHospitalClick }) {
 /* ═══════════════════════════════════════════
    CLINIC DASHBOARD
 ═══════════════════════════════════════════ */
-function ClinicDash({ onDoctorClick }) {
-  const h = hospitals[0];
-  const revs = h.reviews;
-  const avg = k=>(revs.reduce((a,r)=>a+r[k],0)/revs.length).toFixed(1);
-  const dist = [5,4,3,2,1].map(r=>({r,cnt:revs.filter(rv=>rv.rating===r).length}));
+function ClinicDash({ user, clinicProfile, clinicBookings, onSaveClinicProfile, onDoctorClick }) {
+  const [f, setF] = useState(() => ({
+    name: clinicProfile?.name || "",
+    short: clinicProfile?.short || "",
+    address: clinicProfile?.address || "",
+    tel: clinicProfile?.tel || "",
+    hours: clinicProfile?.hours || "",
+    access: clinicProfile?.access || "",
+    desc: clinicProfile?.desc || "",
+    lat: clinicProfile?.lat ?? 35.6812,
+    lng: clinicProfile?.lng ?? 139.7671,
+    beds: clinicProfile?.beds ?? 0,
+    founded: clinicProfile?.founded ?? 2020,
+    depts: clinicProfile?.depts?.length ? clinicProfile.depts : ["内科"],
+    parking: !!clinicProfile?.parking,
+    nightService: !!clinicProfile?.nightService,
+    female: !!clinicProfile?.female,
+    online: !!clinicProfile?.online,
+  }));
+  const [saved, setSaved] = useState(false);
+  useEffect(() => {
+    setF({
+      name: clinicProfile?.name || "",
+      short: clinicProfile?.short || "",
+      address: clinicProfile?.address || "",
+      tel: clinicProfile?.tel || "",
+      hours: clinicProfile?.hours || "",
+      access: clinicProfile?.access || "",
+      desc: clinicProfile?.desc || "",
+      lat: clinicProfile?.lat ?? 35.6812,
+      lng: clinicProfile?.lng ?? 139.7671,
+      beds: clinicProfile?.beds ?? 0,
+      founded: clinicProfile?.founded ?? 2020,
+      depts: clinicProfile?.depts?.length ? clinicProfile.depts : ["内科"],
+      parking: !!clinicProfile?.parking,
+      nightService: !!clinicProfile?.nightService,
+      female: !!clinicProfile?.female,
+      online: !!clinicProfile?.online,
+    });
+  }, [clinicProfile]);
+  const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
+  const toggleDept = (d) => set("depts", f.depts.includes(d) ? f.depts.filter((x) => x !== d) : [...f.depts, d]);
+  const toggleFlag = (k) => set(k, !f[k]);
+  const submit = () => {
+    if (!f.name.trim() || !f.address.trim()) return;
+    onSaveClinicProfile({
+      ...f,
+      lat: Number(f.lat),
+      lng: Number(f.lng),
+      beds: Number(f.beds),
+      founded: Number(f.founded),
+    });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1600);
+  };
+
+  if (!user || user.role !== "clinic") {
+    return <div style={{background:C.white,borderRadius:16,padding:20,border:`1px solid ${C.border}`,textAlign:"center"}}>
+      <div style={{fontSize:30,marginBottom:8}}>🏥</div>
+      <div style={{fontSize:14,fontWeight:800,color:C.text,marginBottom:6}}>医療機関会員でログインしてください</div>
+      <div style={{fontSize:12,color:C.textM}}>自院情報の登録・編集は医療機関アカウントで利用できます</div>
+    </div>;
+  }
+
+  const profileReady = !!clinicProfile;
   return <div>
     <div style={{background:GB,borderRadius:20,padding:20,marginBottom:14,color:C.white}}>
       <div style={{fontSize:10,color:"#93c5fd",fontWeight:700,marginBottom:4,textTransform:"uppercase",letterSpacing:1}}>医療機関管理ダッシュボード</div>
-      <div style={{fontWeight:900,fontSize:17,marginBottom:2}}>{h.name}</div>
-      <div style={{fontSize:12,color:"#bfdbfe",marginBottom:10}}>{h.address}</div>
+      <div style={{fontWeight:900,fontSize:17,marginBottom:2}}>{profileReady ? clinicProfile.name : "自院情報を登録してください"}</div>
+      <div style={{fontSize:12,color:"#bfdbfe",marginBottom:10}}>{profileReady ? clinicProfile.address : "登録後に患者向け画面へ表示されます"}</div>
       <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-        <Badge blue>✅ 認証済み</Badge>
-        <Badge blue>💻 オンライン診療</Badge>
-        <Badge blue>🌙 夜間対応</Badge>
+        <Badge blue>🏥 医療機関会員</Badge>
+        <Badge blue>📅 予約 {clinicBookings.length}件</Badge>
+        {profileReady && <Badge blue>📝 公開中</Badge>}
       </div>
     </div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-      {[{l:"総合評価",v:h.rating,u:"/5.0",i:"⭐"},{l:"口コミ件数",v:h.cnt,u:"件",i:"💬"},{l:"先生の対応",v:avg("dr"),u:"/5.0",i:"👨‍⚕️"},{l:"今月の閲覧数",v:"2,847",u:"PV",i:"👁"}].map(({l,v,u,i})=>(
+      {[{l:"登録状態",v:profileReady?"公開中":"未登録",u:"",i:"🧾"},{l:"予約件数",v:clinicBookings.length,u:"件",i:"📅"},{l:"オンライン対応",v:f.online?"対応":"未対応",u:"",i:"💻"},{l:"夜間対応",v:f.nightService?"対応":"未対応",u:"",i:"🌙"}].map(({l,v,u,i})=>(
         <div key={l} style={{background:C.white,borderRadius:14,padding:14,border:`1px solid ${C.border}`}}>
           <div style={{fontSize:18,marginBottom:4}}>{i}</div>
           <div style={{fontSize:11,color:C.textM,marginBottom:2}}>{l}</div>
@@ -859,24 +964,33 @@ function ClinicDash({ onDoctorClick }) {
       ))}
     </div>
     <div style={{background:C.white,borderRadius:16,padding:14,marginBottom:14,border:`1px solid ${C.border}`}}>
-      <div style={{fontWeight:800,fontSize:13,color:C.text,marginBottom:12}}>評価分布</div>
-      {dist.map(({r,cnt})=><div key={r} style={{display:"flex",alignItems:"center",gap:8,marginBottom:7}}>
-        <span style={{fontSize:12,color:"#374151",width:14,textAlign:"right",fontWeight:700}}>{r}</span><StarSVG filled size={11}/>
-        <div style={{flex:1,height:7,background:C.grayL,borderRadius:99,overflow:"hidden"}}><div style={{width:`${(cnt/revs.length)*100}%`,height:"100%",background:"linear-gradient(90deg,#f59e0b,#d97706)",borderRadius:99}}/></div>
-        <span style={{fontSize:11,color:C.textM,width:18}}>{cnt}</span>
-      </div>)}
-    </div>
-    <div style={{background:C.white,borderRadius:16,padding:14,marginBottom:14,border:`1px solid ${C.border}`}}>
-      <div style={{fontWeight:800,fontSize:13,color:C.text,marginBottom:12}}>医師一覧</div>
-      {doctors.filter(d=>d.hid===1).map(doc=><div key={doc.id} onClick={()=>onDoctorClick(doc)} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:`1px solid ${C.grayL}`,cursor:"pointer"}}>
-        <Av emoji={doc.photo} size={36} bg="linear-gradient(135deg,#d1fae5,#6ee7b7)"/>
-        <div style={{flex:1}}><div style={{fontWeight:700,fontSize:13,color:C.text}}>{doc.name} 先生</div><div style={{fontSize:11,color:C.textM}}>{doc.dept} · 経験{doc.exp}年</div></div>
-        <div style={{textAlign:"right"}}><Stars rating={Math.round(doc.rating)} size={11}/><div style={{fontSize:11,color:C.textM}}>{doc.cnt}件</div></div>
-      </div>)}
-    </div>
-    <div style={{fontWeight:800,fontSize:13,color:C.text,marginBottom:10}}>返信待ちの口コミ</div>
-    <div style={{display:"flex",flexDirection:"column",gap:8}}>
-      {revs.filter(r=>!r.reply).map(r=><ReviewCard key={r.id} review={r} onDoctorClick={onDoctorClick} clinicView/>)}
+      <div style={{fontWeight:800,fontSize:13,color:C.text,marginBottom:12}}>自院情報の登録・更新</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+        <input value={f.name} onChange={(e)=>set("name", e.target.value)} placeholder="医療機関名" style={{padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,...ff}} />
+        <input value={f.short} onChange={(e)=>set("short", e.target.value)} placeholder="略称（地図ラベル）" style={{padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,...ff}} />
+        <input value={f.tel} onChange={(e)=>set("tel", e.target.value)} placeholder="電話番号" style={{padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,...ff}} />
+        <input value={f.hours} onChange={(e)=>set("hours", e.target.value)} placeholder="診療時間" style={{padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,...ff}} />
+        <input value={f.lat} onChange={(e)=>set("lat", e.target.value)} placeholder="緯度" style={{padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,...ff}} />
+        <input value={f.lng} onChange={(e)=>set("lng", e.target.value)} placeholder="経度" style={{padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,...ff}} />
+      </div>
+      <input value={f.address} onChange={(e)=>set("address", e.target.value)} placeholder="住所" style={{marginTop:8,width:"100%",padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,boxSizing:"border-box",...ff}} />
+      <textarea value={f.access} onChange={(e)=>set("access", e.target.value)} placeholder="アクセス情報" rows={2} style={{marginTop:8,width:"100%",padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,boxSizing:"border-box",resize:"none",...ff}} />
+      <textarea value={f.desc} onChange={(e)=>set("desc", e.target.value)} placeholder="施設紹介" rows={3} style={{marginTop:8,width:"100%",padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,boxSizing:"border-box",resize:"none",...ff}} />
+      <div style={{marginTop:8}}>
+        <div style={{fontSize:12,fontWeight:700,color:C.text,marginBottom:6}}>診療科目</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+          {DEPT_OPTIONS.map((d)=><Chip key={d} active={f.depts.includes(d)} onClick={()=>toggleDept(d)}>{f.depts.includes(d)?"✓ ":""}{d}</Chip>)}
+        </div>
+      </div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:8,marginTop:8}}>
+        {[["parking","🚗 駐車場"],["nightService","🌙 夜間対応"],["female","👩‍⚕️ 女性医師"],["online","💻 オンライン診療"]].map(([k, label]) => (
+          <Chip key={k} active={!!f[k]} onClick={() => toggleFlag(k)}>{label}</Chip>
+        ))}
+      </div>
+      <div style={{display:"flex",gap:8,marginTop:12,alignItems:"center"}}>
+        <Btn onClick={submit} style={{padding:"10px 18px"}}>保存する</Btn>
+        {saved && <span style={{fontSize:12,color:C.green,fontWeight:700}}>保存しました</span>}
+      </div>
     </div>
   </div>;
 }
@@ -887,6 +1001,7 @@ function ClinicDash({ onDoctorClick }) {
 export default function App() {
   const [users, setUsers] = useState(() => readJSON(STORAGE_KEYS.users, []));
   const [bookings, setBookings] = useState(() => readJSON(STORAGE_KEYS.bookings, []));
+  const [clinicProfiles, setClinicProfiles] = useState(() => readJSON(STORAGE_KEYS.clinicProfiles, []));
   const [mode, setMode] = useState("patient");
   const [view, setView] = useState("home");
   const [search, setSearch] = useState("");
@@ -902,8 +1017,13 @@ export default function App() {
   const [showSymptoms, setShowSymptoms] = useState(false);
   const [user, setUser] = useState(null);
   const [favs, setFavs] = useState([]);
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationError, setLocationError] = useState("");
   const [mounted, setMounted] = useState(false);
   const isClinic = mode==="clinic";
+  const allHospitals = [...hospitals, ...clinicProfiles.map(toHospitalFromProfile)];
+  const clinicProfile = user?.role === "clinic" ? clinicProfiles.find((p) => p.ownerUserId === user.id) : null;
+  const clinicBookings = clinicProfile ? bookings.filter((b) => b.hospitalId === clinicProfile.id) : [];
 
   useEffect(()=>{setTimeout(()=>setMounted(true),80);},[]);
   useEffect(() => {
@@ -921,8 +1041,8 @@ export default function App() {
     }
     const favoriteMap = readJSON(STORAGE_KEYS.favorites, {});
     const ids = favoriteMap[user.id] || [];
-    setFavs(hospitals.filter((h) => ids.includes(h.id)));
-  }, [user]);
+    setFavs(allHospitals.filter((h) => ids.includes(h.id)));
+  }, [user, clinicProfiles]);
 
   useEffect(() => {
     if (!user) return;
@@ -1010,7 +1130,38 @@ export default function App() {
     writeJSON(STORAGE_KEYS.bookings, next);
   };
 
-  const filtered = hospitals
+  const requestLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError("このブラウザは位置情報取得に対応していません");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLocationError("");
+      },
+      () => setLocationError("位置情報が取得できませんでした。ブラウザ設定で許可してください。"),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 },
+    );
+  };
+
+  const saveClinicProfile = (payload) => {
+    if (!user || user.role !== "clinic") return;
+    const prev = clinicProfiles.find((p) => p.ownerUserId === user.id);
+    const nextProfile = {
+      id: prev?.id || createId("clinic"),
+      ownerUserId: user.id,
+      ...payload,
+      updatedAt: new Date().toISOString(),
+    };
+    const nextProfiles = prev
+      ? clinicProfiles.map((p) => (p.ownerUserId === user.id ? nextProfile : p))
+      : [...clinicProfiles, nextProfile];
+    setClinicProfiles(nextProfiles);
+    writeJSON(STORAGE_KEYS.clinicProfiles, nextProfiles);
+  };
+
+  const filtered = allHospitals
     .filter(h=>{
       if(search&&!(h.name.includes(search)||h.address.includes(search)||h.depts.some(d=>d.includes(search))))return false;
       if(dept!=="すべて"&&!h.depts.includes(dept))return false;
@@ -1098,13 +1249,13 @@ export default function App() {
         {view==="mypage"&&user ? (
           <MyPage user={user} favs={favs} bookings={userBookings} onUnfav={id=>setFavs(p=>p.filter(f=>f.id!==id))} onLogout={()=>{clearSession();setUser(null);setView("home");}} onHospitalClick={openHospital}/>
         ) : isClinic ? (
-          <ClinicDash onDoctorClick={setDocModal}/>
+          <ClinicDash user={user} clinicProfile={clinicProfile} clinicBookings={clinicBookings} onSaveClinicProfile={saveClinicProfile} onDoctorClick={setDocModal}/>
         ) : view==="detail"&&selected ? (
           <HospitalDetail hospital={selected} onBack={()=>{setSelected(null);setView("home");}} onDoctorClick={setDocModal} isFav={isFav(selected)} onFavToggle={toggleFav} user={user} onCreateBooking={createBooking} onRequireLogin={()=>setShowAuth(true)}/>
         ) : (
           <div>
             {/* Map */}
-            {showMap&&<MapView hospitals={hospitals} onSelect={openHospital}/>}
+            {showMap&&<MapView hospitals={filtered} onSelect={openHospital} userLocation={userLocation} onLocate={requestLocation} locationError={locationError}/>}
 
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
               <div>
