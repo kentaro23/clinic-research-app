@@ -22,7 +22,7 @@ create table if not exists public.clinics (
   tel text,
   hours text,
   access text,
-  desc text,
+  description text,
   lat double precision not null default 35.6812,
   lng double precision not null default 139.7671,
   beds integer not null default 0,
@@ -140,4 +140,3 @@ for select using (true);
 drop policy if exists "audit_insert_self" on public.audit_logs;
 create policy "audit_insert_self" on public.audit_logs
 for insert with check (auth.uid() = actor_user_id or actor_user_id is null);
-
