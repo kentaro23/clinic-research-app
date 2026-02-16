@@ -52,36 +52,36 @@ const createId = (prefix) => `${prefix}_${Date.now()}_${Math.floor(Math.random()
    DATA
 ═══════════════════════════════════════════ */
 const SYMPTOMS = [
-  { s:"発熱・悪寒", dept:"内科", icon:"🤒" },
-  { s:"頭痛・偏頭痛", dept:"神経内科", icon:"🤕" },
-  { s:"腹痛・下痢", dept:"内科", icon:"🤢" },
-  { s:"咳・鼻水・喉", dept:"内科", icon:"😷" },
-  { s:"腰痛・肩こり", dept:"整形外科", icon:"🦴" },
-  { s:"膝・関節痛", dept:"整形外科", icon:"🦵" },
-  { s:"皮膚のかゆみ・湿疹", dept:"皮膚科", icon:"🩹" },
-  { s:"不眠・うつ", dept:"神経内科", icon:"😴" },
-  { s:"動悸・息切れ", dept:"内科", icon:"💓" },
-  { s:"子どもの急な発熱", dept:"小児科", icon:"👶" },
-  { s:"妊娠・婦人科", dept:"産婦人科", icon:"🤰" },
-  { s:"めまい・耳鳴り", dept:"神経内科", icon:"😵" },
+  { s:"発熱・悪寒", dept:"内科", icon:"" },
+  { s:"頭痛・偏頭痛", dept:"神経内科", icon:"" },
+  { s:"腹痛・下痢", dept:"内科", icon:"" },
+  { s:"咳・鼻水・喉", dept:"内科", icon:"" },
+  { s:"腰痛・肩こり", dept:"整形外科", icon:"" },
+  { s:"膝・関節痛", dept:"整形外科", icon:"" },
+  { s:"皮膚のかゆみ・湿疹", dept:"皮膚科", icon:"" },
+  { s:"不眠・うつ", dept:"神経内科", icon:"" },
+  { s:"動悸・息切れ", dept:"内科", icon:"" },
+  { s:"子どもの急な発熱", dept:"小児科", icon:"" },
+  { s:"妊娠・婦人科", dept:"産婦人科", icon:"" },
+  { s:"めまい・耳鳴り", dept:"神経内科", icon:"" },
 ];
 const ALL_DEPTS = ["すべて","内科","外科","整形外科","小児科","産婦人科","皮膚科","神経内科"];
 const CFILTERS = [
-  { k:"nightService", l:"夜間対応", i:"🌙" },
-  { k:"parking", l:"駐車場", i:"🚗" },
-  { k:"female", l:"女性医師在籍", i:"👩‍⚕️" },
-  { k:"online", l:"オンライン診療", i:"💻" },
-  { k:"verified", l:"認証済み", i:"✅" },
-  { k:"today", l:"本日診療", i:"📅" },
+  { k:"nightService", l:"夜間対応", i:"" },
+  { k:"parking", l:"駐車場", i:"" },
+  { k:"female", l:"女性医師在籍", i:"" },
+  { k:"online", l:"オンライン診療", i:"" },
+  { k:"verified", l:"認証済み", i:"" },
+  { k:"today", l:"本日診療", i:"" },
 ];
 const TAGS = ["説明が丁寧","待ち時間短め","スタッフ親切","設備が充実","清潔","話しやすい","専門的","予約しやすい"];
 
 const doctors = [
-  { id:1, name:"山田 一郎", title:"院長・内科専門医", hid:1, dept:"内科", exp:22, edu:"東京大学医学部", certs:["日本内科学会認定医","糖尿病専門医","総合内科専門医"], specialties:["糖尿病","高血圧","メタボリックシンドローム"], bio:"患者様一人ひとりの生活背景を大切にした診療を心がけています。難治性の生活習慣病も、長期的なサポートで改善を目指します。", rating:4.7, cnt:64, photo:"👨‍⚕️", female:false },
-  { id:2, name:"佐藤 二郎", title:"整形外科部長", hid:1, dept:"整形外科", exp:15, edu:"慶應義塾大学医学部", certs:["整形外科専門医","スポーツ医学専門医"], specialties:["膝関節","腰椎ヘルニア","スポーツ外傷"], bio:"スポーツ医学を専門とし、アスリートから高齢者まで幅広く対応。できる限り手術を避けた治療を提案します。", rating:4.4, cnt:38, photo:"🧑‍⚕️", female:false },
-  { id:3, name:"伊藤 花子", title:"産婦人科部長", hid:1, dept:"産婦人科", exp:18, edu:"大阪大学医学部", certs:["産科婦人科専門医","母体保護法指定医","生殖医療専門医"], specialties:["ハイリスク妊娠","不妊治療","低侵襲手術"], bio:"妊娠・出産・婦人科疾患まで、女性のライフステージを通じてサポートします。女性患者様が安心して相談できる環境づくりを大切にしています。", rating:4.9, cnt:52, photo:"👩‍⚕️", female:true },
-  { id:4, name:"加藤 賢司", title:"院長・小児科専門医", hid:2, dept:"小児科", exp:12, edu:"京都大学医学部", certs:["小児科専門医","小児アレルギー専門医"], specialties:["小児アレルギー","夜尿症","発達支援"], bio:"子どもの「なんで？」に向き合い、保護者の方と一緒に考える診療をしています。ワクチンや健診もお気軽にご相談ください。", rating:4.8, cnt:47, photo:"👨‍⚕️", female:false },
-  { id:5, name:"田中 美穂", title:"皮膚科院長", hid:3, dept:"皮膚科", exp:9, edu:"東北大学医学部", certs:["皮膚科専門医","レーザー専門医"], specialties:["アトピー","美容皮膚科","皮膚腫瘍"], bio:"皮膚の悩みは見た目だけでなく心にも影響します。保険診療から自由診療まで、患者様のニーズに合わせた提案をします。", rating:4.6, cnt:29, photo:"👩‍⚕️", female:true },
+  { id:1, name:"山田 一郎", title:"院長・内科専門医", hid:1, dept:"内科", exp:22, edu:"東京大学医学部", certs:["日本内科学会認定医","糖尿病専門医","総合内科専門医"], specialties:["糖尿病","高血圧","メタボリックシンドローム"], bio:"患者様一人ひとりの生活背景を大切にした診療を心がけています。難治性の生活習慣病も、長期的なサポートで改善を目指します。", rating:4.7, cnt:64, photo:"", female:false },
+  { id:2, name:"佐藤 二郎", title:"整形外科部長", hid:1, dept:"整形外科", exp:15, edu:"慶應義塾大学医学部", certs:["整形外科専門医","スポーツ医学専門医"], specialties:["膝関節","腰椎ヘルニア","スポーツ外傷"], bio:"スポーツ医学を専門とし、アスリートから高齢者まで幅広く対応。できる限り手術を避けた治療を提案します。", rating:4.4, cnt:38, photo:"", female:false },
+  { id:3, name:"伊藤 花子", title:"産婦人科部長", hid:1, dept:"産婦人科", exp:18, edu:"大阪大学医学部", certs:["産科婦人科専門医","母体保護法指定医","生殖医療専門医"], specialties:["ハイリスク妊娠","不妊治療","低侵襲手術"], bio:"妊娠・出産・婦人科疾患まで、女性のライフステージを通じてサポートします。女性患者様が安心して相談できる環境づくりを大切にしています。", rating:4.9, cnt:52, photo:"", female:true },
+  { id:4, name:"加藤 賢司", title:"院長・小児科専門医", hid:2, dept:"小児科", exp:12, edu:"京都大学医学部", certs:["小児科専門医","小児アレルギー専門医"], specialties:["小児アレルギー","夜尿症","発達支援"], bio:"子どもの「なんで？」に向き合い、保護者の方と一緒に考える診療をしています。ワクチンや健診もお気軽にご相談ください。", rating:4.8, cnt:47, photo:"", female:false },
+  { id:5, name:"田中 美穂", title:"皮膚科院長", hid:3, dept:"皮膚科", exp:9, edu:"東北大学医学部", certs:["皮膚科専門医","レーザー専門医"], specialties:["アトピー","美容皮膚科","皮膚腫瘍"], bio:"皮膚の悩みは見た目だけでなく心にも影響します。保険診療から自由診療まで、患者様のニーズに合わせた提案をします。", rating:4.6, cnt:29, photo:"", female:true },
 ];
 
 const hospitals = [
@@ -91,7 +91,7 @@ const hospitals = [
     tel:"03-1234-5678", hours:"月〜金 8:30〜17:00 / 土 8:30〜12:30 / 日祝 休診",
     depts:["内科","外科","整形外科","小児科","産婦人科"],
     rating:4.3, cnt:128, wait:"約30分", parking:true, nightService:true,
-    female:true, online:true, verified:true, today:true, emoji:"🏥",
+    female:true, online:true, verified:true, today:true, emoji:"MC",
     desc:"都心に位置する総合病院。最新MRI・CT設備完備、専門医チームによる高度医療を提供。2024年新棟完成。",
     access:"東京駅丸の内南口より徒歩5分 / 地下鉄二重橋前駅より徒歩2分",
     beds:320, founded:1978,
@@ -108,7 +108,7 @@ const hospitals = [
     tel:"03-2345-6789", hours:"月〜土 9:00〜18:00 / 日祝 休診",
     depts:["内科","小児科","皮膚科"],
     rating:4.7, cnt:89, wait:"約15分", parking:false, nightService:false,
-    female:false, online:true, verified:true, today:true, emoji:"🏨",
+    female:false, online:true, verified:true, today:true, emoji:"CL",
     desc:"地域密着型のアットホームなクリニック。子どもから高齢者まで家族全員のかかりつけ医として親しまれています。",
     access:"渋谷駅ハチ公口より徒歩8分 / 表参道駅より徒歩10分",
     beds:0, founded:2012,
@@ -123,7 +123,7 @@ const hospitals = [
     tel:"03-3456-7890", hours:"月〜金 10:00〜19:30 / 土 10:00〜17:00",
     depts:["皮膚科"],
     rating:4.6, cnt:73, wait:"約20分", parking:false, nightService:false,
-    female:true, online:false, verified:true, today:true, emoji:"✨",
+    female:true, online:false, verified:true, today:true, emoji:"SK",
     desc:"皮膚科専門クリニック。アトピー・ニキビから美容皮膚科まで対応。最新レーザー機器完備。",
     access:"新宿三丁目駅E5出口より徒歩1分",
     beds:0, founded:2019,
@@ -138,7 +138,7 @@ const hospitals = [
     tel:"03-4567-8901", hours:"月〜日 18:00〜翌2:00（年中無休）",
     depts:["内科","小児科"],
     rating:4.1, cnt:56, wait:"約45分", parking:false, nightService:true,
-    female:false, online:false, verified:false, today:true, emoji:"🌙",
+    female:false, online:false, verified:false, today:true, emoji:"NH",
     desc:"夜間・深夜専門クリニック。仕事帰りや休日の急な体調不良に年中無休で対応します。",
     access:"六本木駅2番出口より徒歩3分",
     beds:0, founded:2020,
@@ -168,7 +168,7 @@ const toHospitalFromProfile = (profile) => ({
   online: !!profile.online,
   verified: false,
   today: true,
-  emoji: "🏥",
+  emoji: "CL",
   desc: profile.desc || "施設情報を準備中です。",
   access: profile.access || "アクセス情報を準備中です。",
   beds: Number(profile.beds) || 0,
@@ -281,10 +281,9 @@ function MapView({ hospitals, onSelect, userLocation, onLocate, locationError })
 
   return <div style={{background:"#e8f5e9",borderRadius:16,overflow:"hidden",position:"relative",marginBottom:16,border:`1px solid ${C.border}`}}>
     <div style={{padding:"8px 12px",background:"white",borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",gap:6}}>
-      <span style={{fontSize:14}}>🗺️</span>
       <span style={{fontSize:12,fontWeight:700,color:C.text}}>Googleマップ（現在地中心）</span>
       <button onClick={onLocate} style={{marginLeft:"auto",fontSize:11,padding:"4px 10px",borderRadius:99,border:`1px solid ${C.border}`,background:"#f8fafc",color:C.text,cursor:"pointer",...ff}}>
-        📍 現在地を取得
+        現在地を取得
       </button>
     </div>
     <iframe
@@ -327,7 +326,7 @@ function OnlineConsult({ hospital, user, onCreateBooking, onRequireLogin }) {
   const slots = ["09:00","09:30","10:00","10:30","14:00","14:30","15:00","16:00","16:30"];
 
   if (done) return <div style={{textAlign:"center",padding:"40px 0"}}>
-    <div style={{fontSize:52,marginBottom:14}}>💻✅</div>
+    <div style={{fontSize:28,fontWeight:900,color:C.green,marginBottom:14}}>完了</div>
     <p style={{fontWeight:900,fontSize:17,color:C.text,marginBottom:6}}>オンライン診療の予約完了！</p>
     <p style={{fontSize:13,color:C.textS}}>{time} にビデオ通話でつながります</p>
     <p style={{fontSize:12,color:C.textM,marginTop:8}}>確認メールとリマインダーをお送りしました</p>
@@ -354,7 +353,7 @@ function OnlineConsult({ hospital, user, onCreateBooking, onRequireLogin }) {
 
   return <div>
     <div style={{padding:"12px 14px",background:"#eff6ff",borderRadius:12,marginBottom:16,border:"1px solid #bfdbfe",display:"flex",gap:10,alignItems:"flex-start"}}>
-      <span style={{fontSize:20}}>ℹ️</span>
+      <span style={{fontSize:12,fontWeight:900,color:C.blue,border:`1px solid #93c5fd`,borderRadius:99,padding:"2px 7px"}}>INFO</span>
       <div>
         <div style={{fontSize:12,fontWeight:700,color:C.blue,marginBottom:2}}>オンライン診療とは</div>
         <div style={{fontSize:11,color:"#1e40af",lineHeight:1.6}}>スマートフォン・PCのカメラを使って、自宅から医師の診察を受けられます。処方箋は薬局へ電送します。</div>
@@ -375,7 +374,7 @@ function OnlineConsult({ hospital, user, onCreateBooking, onRequireLogin }) {
         {slots.map(s=><button key={s} onClick={()=>setTime(s)} style={{padding:"10px 16px",borderRadius:12,border:`2px solid ${time===s?C.green:C.border}`,background:time===s?C.greenLL:C.white,color:time===s?C.greenD:C.text,fontSize:13,fontWeight:700,cursor:"pointer",...ff}}>{s}</button>)}
       </div>
       {!user && <div style={{padding:"10px 13px",background:"#fef3c7",borderRadius:12,border:"1px solid #fcd34d",fontSize:12,color:"#92400e",marginBottom:10}}>ログインすると予約を確定できます</div>}
-      <Btn onClick={confirmOnlineBooking} disabled={!time} style={{width:"100%",padding:12,borderRadius:14,fontSize:14}}>💻 オンライン診療を予約する</Btn>
+      <Btn onClick={confirmOnlineBooking} disabled={!time} style={{width:"100%",padding:12,borderRadius:14,fontSize:14}}>オンライン診療を予約する</Btn>
     </div>}
   </div>;
 }
@@ -407,7 +406,7 @@ function Booking({ hospital, user, onCreateBooking, onRequireLogin }) {
     setDone(true);
   };
   if (done) return <div style={{textAlign:"center",padding:"36px 0"}}>
-    <div style={{fontSize:52,marginBottom:14}}>📅✅</div>
+    <div style={{fontSize:28,fontWeight:900,color:C.green,marginBottom:14}}>完了</div>
     <p style={{fontWeight:900,fontSize:17,color:C.text,marginBottom:4}}>予約が確定しました！</p>
     <p style={{fontSize:13,color:C.textS}}>{date} {time} · {dept}</p>
     <p style={{fontSize:12,color:C.textM,marginTop:8}}>前日にリマインダーをお送りします</p>
@@ -422,7 +421,7 @@ function Booking({ hospital, user, onCreateBooking, onRequireLogin }) {
     <div style={{display:"flex",flexWrap:"wrap",gap:6}}>{times.map(t=><Chip key={t} active={time===t} onClick={()=>setTime(t)}>{t}</Chip>)}</div></div>
     <div style={{padding:"10px 13px",background:"#eff6ff",borderRadius:12,border:"1px solid #bfdbfe",fontSize:12,color:C.blue}}>ℹ️ 前日18時にリマインドメールをお送りします</div>
     {!user && <div style={{padding:"10px 13px",background:"#fef3c7",borderRadius:12,border:"1px solid #fcd34d",fontSize:12,color:"#92400e"}}>ログインすると予約を確定できます</div>}
-    <Btn onClick={confirmBooking} disabled={!date||!time} style={{width:"100%",padding:13,borderRadius:14,fontSize:14}}>📅 予約を確定する</Btn>
+    <Btn onClick={confirmBooking} disabled={!date||!time} style={{width:"100%",padding:13,borderRadius:14,fontSize:14}}>予約を確定する</Btn>
   </div>;
 }
 
@@ -462,7 +461,7 @@ function Auth({ onLogin, onSignup, onSocialLogin, onClose }) {
     <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.5)",backdropFilter:"blur(5px)"}} onClick={onClose}/>
     <div style={{position:"relative",width:"100%",maxWidth:380,background:C.white,borderRadius:24,padding:28,boxShadow:"0 24px 80px rgba(0,0,0,.25)"}}>
       <div style={{textAlign:"center",marginBottom:24}}>
-        <div style={{width:56,height:56,borderRadius:16,background:G,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,margin:"0 auto 10px"}}>🏥</div>
+        <div style={{width:56,height:56,borderRadius:16,background:G,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:900,color:"#fff",margin:"0 auto 10px"}}>DR</div>
         <div style={{fontWeight:900,fontSize:20,color:C.text}}>ドクターレビュー</div>
         <div style={{fontSize:12,color:C.textM,marginTop:4}}>アカウントで便利に使いこなす</div>
       </div>
@@ -472,7 +471,7 @@ function Auth({ onLogin, onSignup, onSocialLogin, onClose }) {
         ))}
       </div>
       <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:18}}>
-        {[["🔵 Googleでログイン","#4285f4"],["⬛ Appleでログイン","#111827"]].map(([l,c])=>(
+        {[["Googleでログイン","#4285f4"],["Appleでログイン","#111827"]].map(([l,c])=>(
           <button key={l} onClick={()=>social(l.includes("Google") ? "google" : "apple")} style={{padding:"11px",borderRadius:12,border:`1.5px solid ${C.border}`,background:C.white,fontSize:13,fontWeight:700,color:c,cursor:"pointer",...ff,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>{l}</button>
         ))}
       </div>
@@ -501,7 +500,7 @@ function Auth({ onLogin, onSignup, onSocialLogin, onClose }) {
 function NotifPanel({ bookings = [] }) {
   const bookingNotifs = bookings.slice(0, 5).map((b) => ({
     id: b.id,
-    icon: "✅",
+    icon: "予約",
     title: "予約確定",
     body: `${b.hospitalName}（${b.dept}） ${b.date} ${b.time} の予約が確定しました`,
     time: "最新",
@@ -543,13 +542,13 @@ function ReviewForm({ hospital, user, onClose, onSubmit, doctorsData }) {
     setSubmitting(false);
     if (ok) setDone(true);
   };
-  if (done) return <div style={{textAlign:"center",padding:"32px 0"}}><div style={{fontSize:52,marginBottom:12}}>✅</div><p style={{fontWeight:900,fontSize:17,color:C.text,marginBottom:4}}>投稿ありがとうございます！</p><p style={{fontSize:13,color:C.textM}}>確認後に公開されます（通常1〜2営業日）</p></div>;
+  if (done) return <div style={{textAlign:"center",padding:"32px 0"}}><div style={{fontSize:28,fontWeight:900,color:C.green,marginBottom:12}}>完了</div><p style={{fontWeight:900,fontSize:17,color:C.text,marginBottom:4}}>投稿ありがとうございます！</p><p style={{fontSize:13,color:C.textM}}>確認後に公開されます（通常1〜2営業日）</p></div>;
   const inp = {width:"100%",padding:"11px 14px",borderRadius:12,border:`1.5px solid ${C.border}`,fontSize:13,outline:"none",boxSizing:"border-box",...ff};
   return <div>
     <div style={{display:"flex",alignItems:"center",marginBottom:22}}>
       {["診療科","評価","コメント"].map((l,i)=>{const s=i+1,act=step===s,past=step>s;return<div key={s} style={{display:"flex",alignItems:"center",flex:1}}>
         <div style={{display:"flex",flexDirection:"column",alignItems:"center",flex:1}}>
-          <div style={{width:28,height:28,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:12,background:past?C.green:act?G:C.grayL,color:act||past?C.white:C.textM,transition:"all .3s"}}>{past?"✓":s}</div>
+          <div style={{width:28,height:28,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:12,background:past?C.green:act?G:C.grayL,color:act||past?C.white:C.textM,transition:"all .3s"}}>{past?"完":s}</div>
           <span style={{fontSize:10,color:act?C.green:C.textM,marginTop:3,fontWeight:act?700:400}}>{l}</span>
         </div>
         {i<2&&<div style={{height:2,width:"100%",background:step>s?C.green:C.border,marginTop:-14,transition:"all .3s"}}/>}
@@ -562,7 +561,7 @@ function ReviewForm({ hospital, user, onClose, onSubmit, doctorsData }) {
       {deptDocs.map(d=><div key={d.id} onClick={()=>set("did",f.did===d.id?null:d.id)} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:12,border:`2px solid ${f.did===d.id?C.green:C.border}`,background:f.did===d.id?C.greenLL:C.white,cursor:"pointer",marginBottom:6,transition:"all .15s"}}>
         <Av emoji={d.photo} size={34} bg="linear-gradient(135deg,#d1fae5,#6ee7b7)"/>
         <div><div style={{fontWeight:700,fontSize:13,color:C.text}}>{d.name} 先生</div><div style={{fontSize:11,color:C.textM}}>{d.title}</div></div>
-        {f.did===d.id&&<span style={{marginLeft:"auto",color:C.green,fontSize:18}}>✓</span>}
+        {f.did===d.id&&<span style={{marginLeft:"auto",color:C.green,fontSize:11,fontWeight:800}}>選択中</span>}
       </div>)}</div>}
       <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"#f9fafb",borderRadius:12}}>
         <input type="checkbox" id="anon3" checked={f.anon} onChange={e=>set("anon",e.target.checked)} style={{width:15,height:15,accentColor:C.green}}/>
@@ -570,12 +569,12 @@ function ReviewForm({ hospital, user, onClose, onSubmit, doctorsData }) {
       </div>
     </div>}
     {step===2&&<div style={{display:"flex",flexDirection:"column",gap:16}}>
-      {[{k:"overall",l:"⭐ 総合評価"},{k:"dr",l:"👨‍⚕️ 先生の対応"},{k:"fr",l:"🏥 施設・設備"},{k:"wr",l:"⏱ 待ち時間"}].map(({k,l})=><div key={k}>
+      {[{k:"overall",l:"総合評価"},{k:"dr",l:"先生の対応"},{k:"fr",l:"施設・設備"},{k:"wr",l:"待ち時間"}].map(({k,l})=><div key={k}>
         <label style={{fontSize:13,fontWeight:700,color:"#374151",display:"block",marginBottom:7}}>{l}</label>
         <Stars rating={f[k]} size={30} interactive onRate={r=>set(k,r)}/>
       </div>)}
       <div><label style={{fontSize:12,fontWeight:700,color:"#374151",display:"block",marginBottom:6}}>当てはまるタグ</label>
-      <div style={{display:"flex",flexWrap:"wrap",gap:6}}>{TAGS.map(t=><Chip key={t} active={f.tags.includes(t)} onClick={()=>toggleTag(t)}>{f.tags.includes(t)?"✓ ":""}{t}</Chip>)}</div></div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:6}}>{TAGS.map(t=><Chip key={t} active={f.tags.includes(t)} onClick={()=>toggleTag(t)}>{f.tags.includes(t)?"選択 ":""}{t}</Chip>)}</div></div>
     </div>}
     {step===3&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
       <div><label style={{fontSize:12,fontWeight:700,color:"#374151",display:"block",marginBottom:5}}>タイトル</label>
@@ -584,11 +583,11 @@ function ReviewForm({ hospital, user, onClose, onSubmit, doctorsData }) {
       <textarea placeholder="診察の雰囲気、待ち時間、先生の対応など（100文字以上推奨）" value={f.body} onChange={e=>set("body",e.target.value)} rows={5}
         style={{...inp,resize:"none",lineHeight:1.6}} onFocus={e=>e.target.style.borderColor=C.green} onBlur={e=>e.target.style.borderColor=C.border}/>
       <div style={{textAlign:"right",fontSize:11,color:C.textM}}>{f.body.length}文字</div></div>
-      <div style={{padding:"10px 12px",background:"#fefce8",borderRadius:12,border:"1px solid #fde68a",fontSize:12,color:"#92400e"}}>⚠️ 個人情報（氏名・住所・電話番号等）は記載しないでください</div>
+      <div style={{padding:"10px 12px",background:"#fefce8",borderRadius:12,border:"1px solid #fde68a",fontSize:12,color:"#92400e"}}>注意: 個人情報（氏名・住所・電話番号等）は記載しないでください</div>
     </div>}
     <div style={{display:"flex",gap:8,marginTop:20}}>
-      {step>1&&<Btn onClick={()=>setStep(s=>s-1)} variant="outline" style={{flex:1,padding:12,borderRadius:14,fontSize:14}}>← 戻る</Btn>}
-      <Btn onClick={()=>step<3?setStep(s=>s+1):submitReview()} disabled={submitting} style={{flex:2,padding:12,borderRadius:14,fontSize:14}}>{step<3?"次へ →":(submitting?"投稿中...":"投稿する ✓")}</Btn>
+      {step>1&&<Btn onClick={()=>setStep(s=>s-1)} variant="outline" style={{flex:1,padding:12,borderRadius:14,fontSize:14}}>戻る</Btn>}
+      <Btn onClick={()=>step<3?setStep(s=>s+1):submitReview()} disabled={submitting} style={{flex:2,padding:12,borderRadius:14,fontSize:14}}>{step<3?"次へ":(submitting?"投稿中...":"投稿する")}</Btn>
     </div>
   </div>;
 }
@@ -628,7 +627,7 @@ function ReviewCard({ review, onDoctorClick, clinicView=false, onReport, onHelpf
       <RatingBar label="待ち時間" value={review.wr}/>
     </div>
     {replySaved&&<div style={{padding:"10px 12px",background:"#eff6ff",borderRadius:12,marginBottom:10,border:"1px solid #bfdbfe"}}>
-      <div style={{fontSize:11,fontWeight:700,color:C.blue,marginBottom:3}}>🏥 医療機関からの返信</div>
+      <div style={{fontSize:11,fontWeight:700,color:C.blue,marginBottom:3}}>医療機関からの返信</div>
       <p style={{fontSize:12,color:"#1e40af",lineHeight:1.6,margin:0}}>{replyText}</p>
     </div>}
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -637,7 +636,7 @@ function ReviewCard({ review, onDoctorClick, clinicView=false, onReport, onHelpf
         {!clinicView&&<Btn sm variant="outline" onClick={()=>onReport?.(review)}>通報</Btn>}
         {clinicView&&!replySaved&&<Btn sm variant="outline" onClick={()=>setShowReplyBox(!showReplyBox)}>返信する</Btn>}
         <button onClick={async ()=>{if(!voted){const next = helpful + 1;setHelpful(next);setVoted(true);await onHelpful?.(review, next);}}} style={{display:"flex",alignItems:"center",gap:5,padding:"5px 12px",borderRadius:99,border:`1px solid ${voted?C.green:C.border}`,background:voted?C.greenLL:"#f9fafb",color:voted?C.green:C.gray,fontSize:11,fontWeight:700,cursor:"pointer",...ff}}>
-          👍 {helpful}
+          参考 {helpful}
         </button>
       </div>
     </div>
@@ -660,11 +659,11 @@ function HospitalCard({ h, onClick, isFav, onFavToggle, user, compareActive, onT
   return <div onClick={()=>onClick(h)} onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
     style={{background:C.white,borderRadius:18,border:`1px solid ${C.border}`,padding:16,cursor:"pointer",transition:"all .25s",boxShadow:hov?"0 8px 28px rgba(16,185,129,.14)":"0 2px 10px rgba(0,0,0,.05)",transform:hov?"translateY(-2px)":"none"}}>
     <div style={{display:"flex",gap:14}}>
-      <div style={{width:52,height:52,borderRadius:14,background:C.greenLL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{h.emoji}</div>
+      <div style={{width:52,height:52,borderRadius:14,background:C.greenLL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:800,color:C.greenD,flexShrink:0}}>{h.short || "CL"}</div>
       <div style={{flex:1,minWidth:0}}>
         <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:2}}>
           <div style={{fontWeight:800,fontSize:14,color:C.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{h.name}</div>
-          {h.verified&&<span title="認証済み" style={{fontSize:12,flexShrink:0}}>✅</span>}
+          {h.verified&&<Badge green>認証済み</Badge>}
         </div>
         <div style={{fontSize:11,color:C.textM,marginBottom:6}}>{h.address}</div>
         <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
@@ -677,14 +676,14 @@ function HospitalCard({ h, onClick, isFav, onFavToggle, user, compareActive, onT
           {h.depts.length>3&&<Chip sm>+{h.depts.length-3}</Chip>}
         </div>
       </div>
-      <button onClick={e=>{e.stopPropagation();user?onFavToggle(h):(alert("お気に入りはログインが必要です"));}} style={{fontSize:20,background:"none",border:"none",cursor:"pointer",flexShrink:0,alignSelf:"flex-start",opacity:user?1:.35}}>{isFav?"❤️":"🤍"}</button>
+      <button onClick={e=>{e.stopPropagation();user?onFavToggle(h):(alert("お気に入りはログインが必要です"));}} style={{fontSize:11,background:C.white,border:`1px solid ${C.border}`,padding:"5px 9px",borderRadius:99,cursor:"pointer",flexShrink:0,alignSelf:"flex-start",opacity:user?1:.75,...ff}}>{isFav?"保存済み":"保存"}</button>
     </div>
     <div style={{marginTop:10,paddingTop:10,borderTop:`1px solid ${C.grayL}`,display:"flex",flexWrap:"wrap",gap:10,fontSize:11,color:C.textM}}>
-      <span>⏱ {h.wait}</span>
-      {h.parking&&<span>🚗 駐車場</span>}
-      {h.nightService&&<span>🌙 夜間対応</span>}
-      {h.female&&<span>👩‍⚕️ 女性医師</span>}
-      {h.online&&<span>💻 オンライン</span>}
+      <span>待ち時間 {h.wait}</span>
+      {h.parking&&<span>駐車場</span>}
+      {h.nightService&&<span>夜間対応</span>}
+      {h.female&&<span>女性医師</span>}
+      {h.online&&<span>オンライン</span>}
       {h.today&&<Badge green>本日診療</Badge>}
       <button onClick={(e)=>{e.stopPropagation();onToggleCompare?.(h);}} style={{marginLeft:"auto",padding:"4px 9px",borderRadius:99,border:`1px solid ${compareActive?C.green:C.border}`,background:compareActive?C.greenLL:C.white,color:compareActive?C.greenD:C.text,fontSize:10,fontWeight:700,cursor:"pointer",...ff}}>
         {compareActive?"比較中":"比較する"}
@@ -704,29 +703,29 @@ function HospitalDetail({ hospital, doctorsData, onBack, onDoctorClick, isFav, o
   const avg = k=>hospital.reviews.length ? hospital.reviews.reduce((a,r)=>a+r[k],0)/hospital.reviews.length : 0;
 
   return <div>
-    {modal==="book"&&<Sheet title="📅 ネット予約" onClose={()=>setModal(null)}><Booking hospital={hospital} user={user} onCreateBooking={onCreateBooking} onRequireLogin={onRequireLogin}/></Sheet>}
-    {modal==="online"&&<Sheet title="💻 オンライン診療" onClose={()=>setModal(null)}><OnlineConsult hospital={hospital} user={user} onCreateBooking={onCreateBooking} onRequireLogin={onRequireLogin}/></Sheet>}
+    {modal==="book"&&<Sheet title="ネット予約" onClose={()=>setModal(null)}><Booking hospital={hospital} user={user} onCreateBooking={onCreateBooking} onRequireLogin={onRequireLogin}/></Sheet>}
+    {modal==="online"&&<Sheet title="オンライン診療" onClose={()=>setModal(null)}><OnlineConsult hospital={hospital} user={user} onCreateBooking={onCreateBooking} onRequireLogin={onRequireLogin}/></Sheet>}
 
     {/* Hero */}
     <div style={{background:"linear-gradient(135deg,#059669,#064e3b)",borderRadius:20,padding:20,marginBottom:14,position:"relative",overflow:"hidden"}}>
       <div style={{position:"absolute",top:-30,right:-30,width:130,height:130,borderRadius:"50%",background:"rgba(255,255,255,.06)"}}/>
       <button onClick={onBack} style={{background:"rgba(255,255,255,.15)",border:"none",borderRadius:99,padding:"6px 12px",color:C.white,fontSize:12,cursor:"pointer",marginBottom:12,...ff}}>← 戻る</button>
       <div style={{display:"flex",gap:14}}>
-        <div style={{width:54,height:54,borderRadius:16,background:"rgba(255,255,255,.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}>{hospital.emoji}</div>
+        <div style={{width:54,height:54,borderRadius:16,background:"rgba(255,255,255,.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:900,color:"#fff",flexShrink:0}}>{hospital.short || "CL"}</div>
         <div style={{flex:1}}>
           <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:4}}>
             <h2 style={{fontWeight:900,fontSize:17,color:C.white,margin:0}}>{hospital.name}</h2>
-            {hospital.verified&&<span style={{fontSize:14}}>✅</span>}
-            <button onClick={()=>user?onFavToggle(hospital):(alert("ログインが必要です"))} style={{fontSize:18,background:"none",border:"none",cursor:"pointer",marginLeft:"auto"}}>{isFav?"❤️":"🤍"}</button>
+            {hospital.verified&&<Badge green>認証済み</Badge>}
+            <button onClick={()=>user?onFavToggle(hospital):(alert("ログインが必要です"))} style={{fontSize:11,background:C.white,border:`1px solid ${C.border}`,padding:"5px 9px",borderRadius:99,cursor:"pointer",marginLeft:"auto",...ff}}>{isFav?"保存済み":"保存"}</button>
           </div>
           <p style={{fontSize:12,color:"#a7f3d0",margin:"0 0 6px"}}>{hospital.address}</p>
           <div style={{display:"flex",alignItems:"center",gap:8}}><Stars rating={Math.round(hospital.rating)} size={13}/><span style={{fontWeight:900,color:"#fcd34d",fontSize:15}}>{hospital.rating}</span><span style={{fontSize:12,color:"#6ee7b7"}}>({hospital.cnt}件)</span></div>
         </div>
       </div>
       <div style={{marginTop:14,display:"flex",gap:8}}>
-        <button onClick={()=>setModal("book")} style={{flex:1,padding:"10px",borderRadius:12,border:"none",background:C.white,color:C.green,fontSize:13,fontWeight:800,cursor:"pointer",...ff}}>📅 ネット予約</button>
-        {hospital.online&&<button onClick={()=>setModal("online")} style={{flex:1,padding:"10px",borderRadius:12,border:"1px solid rgba(255,255,255,.4)",background:"rgba(255,255,255,.15)",color:C.white,fontSize:13,fontWeight:700,cursor:"pointer",...ff}}>💻 オンライン診療</button>}
-        <button style={{padding:"10px 14px",borderRadius:12,border:"1px solid rgba(255,255,255,.4)",background:"rgba(255,255,255,.15)",color:C.white,fontSize:13,cursor:"pointer",...ff}}>📞</button>
+        <button onClick={()=>setModal("book")} style={{flex:1,padding:"10px",borderRadius:12,border:"none",background:C.white,color:C.green,fontSize:13,fontWeight:800,cursor:"pointer",...ff}}>ネット予約</button>
+        {hospital.online&&<button onClick={()=>setModal("online")} style={{flex:1,padding:"10px",borderRadius:12,border:"1px solid rgba(255,255,255,.4)",background:"rgba(255,255,255,.15)",color:C.white,fontSize:13,fontWeight:700,cursor:"pointer",...ff}}>オンライン診療</button>}
+        <button style={{padding:"10px 14px",borderRadius:12,border:"1px solid rgba(255,255,255,.4)",background:"rgba(255,255,255,.15)",color:C.white,fontSize:12,cursor:"pointer",...ff}}>電話</button>
       </div>
     </div>
 
@@ -753,7 +752,7 @@ function HospitalDetail({ hospital, doctorsData, onBack, onDoctorClick, isFav, o
     {tab==="reviews"&&<div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
         <span style={{fontWeight:700,fontSize:13,color:"#374151"}}>口コミ ({hospital.reviews.length}件)</span>
-        <Btn sm onClick={()=>{if(!user){alert("口コミの投稿はログインが必要です");return;}setShowForm(!showForm);}}>✏️ 口コミを書く</Btn>
+        <Btn sm onClick={()=>{if(!user){alert("口コミの投稿はログインが必要です");return;}setShowForm(!showForm);}}>口コミを書く</Btn>
       </div>
       {showForm&&<div style={{background:C.white,borderRadius:16,padding:18,marginBottom:14,border:`2px solid ${C.green}`}}>
         <div style={{fontWeight:800,fontSize:14,color:C.text,marginBottom:14}}>口コミを投稿する</div>
@@ -792,7 +791,7 @@ function HospitalDetail({ hospital, doctorsData, onBack, onDoctorClick, isFav, o
 
     {tab==="access"&&<div style={{background:C.white,borderRadius:16,padding:14,border:`1px solid ${C.border}`}}>
       <div style={{background:C.greenLL,borderRadius:12,height:160,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:14,border:`1px solid ${C.greenL}`,flexDirection:"column",gap:8}}>
-        <span style={{fontSize:32}}>🗺️</span>
+        <span style={{fontSize:12,fontWeight:900,color:C.green,border:`1px solid ${C.greenL}`,borderRadius:99,padding:"4px 10px"}}>MAP</span>
         <span style={{fontSize:12,color:C.green,fontWeight:700}}>{hospital.address}</span>
         <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hospital.address)}`} target="_blank" rel="noreferrer"
           style={{fontSize:11,color:C.blue,fontWeight:700,textDecoration:"none",padding:"5px 12px",borderRadius:99,background:"#eff6ff",border:"1px solid #bfdbfe"}}>
@@ -844,7 +843,7 @@ function DoctorProfile({ doc, hospitalsData }) {
     </div>
     <div style={{marginBottom:12}}>
       <div style={{fontSize:12,fontWeight:700,color:"#374151",marginBottom:5}}>資格・認定</div>
-      {certs.length?certs.map(c=><div key={c} style={{fontSize:12,color:"#374151",padding:"2px 0",display:"flex",gap:6}}><span style={{color:C.green}}>✓</span>{c}</div>):<div style={{fontSize:12,color:C.textM}}>登録なし</div>}
+      {certs.length?certs.map(c=><div key={c} style={{fontSize:12,color:"#374151",padding:"2px 0",display:"flex",gap:6}}><span style={{color:C.green}}>・</span>{c}</div>):<div style={{fontSize:12,color:C.textM}}>登録なし</div>}
     </div>
     <div style={{padding:12,background:"#f9fafb",borderRadius:12,marginBottom:reviews.length>0?16:0}}>
       <div style={{fontSize:12,fontWeight:700,color:"#374151",marginBottom:5}}>ひとこと</div>
@@ -884,7 +883,7 @@ function MyPage({ user, favs, bookings, myReviews, onUnfav, onLogout, onHospital
       </div>}
     </div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
-      {[{l:"お気に入り",v:favs.length,i:"❤️"},{l:"投稿口コミ",v:myRevs.length,i:"✏️"},{l:"予約件数",v:bookings.length,i:"📅"}].map(({l,v,i})=>(
+      {[{l:"お気に入り",v:favs.length,i:"FAV"},{l:"投稿口コミ",v:myRevs.length,i:"REV"},{l:"予約件数",v:bookings.length,i:"BK"}].map(({l,v,i})=>(
         <div key={l} style={{background:C.white,borderRadius:14,padding:12,border:`1px solid ${C.border}`,textAlign:"center"}}>
           <div style={{fontSize:20,marginBottom:4}}>{i}</div>
           <div style={{fontSize:20,fontWeight:900,color:C.text}}>{v}</div>
@@ -893,20 +892,20 @@ function MyPage({ user, favs, bookings, myReviews, onUnfav, onLogout, onHospital
       ))}
     </div>
     <div style={{display:"flex",borderBottom:`2px solid ${C.border}`,marginBottom:14}}>
-      {[["fav","❤️ お気に入り"],["reviews","✏️ 投稿履歴"],["bookings","📅 予約履歴"]].map(([k,l])=>(
+      {[["fav","お気に入り"],["reviews","投稿履歴"],["bookings","予約履歴"]].map(([k,l])=>(
         <button key={k} onClick={()=>setTab(k)} style={{padding:"9px 12px",fontSize:12,fontWeight:700,border:"none",background:"none",cursor:"pointer",...ff,color:tab===k?C.green:C.textM,borderBottom:tab===k?`2px solid ${C.green}`:"2px solid transparent",marginBottom:-2}}>{l}</button>
       ))}
     </div>
     {tab==="fav"&&(favs.length===0?
-      <div style={{textAlign:"center",padding:"32px",color:C.textM}}><div style={{fontSize:36,marginBottom:10}}>❤️</div><div style={{fontWeight:700}}>お気に入りはまだありません</div></div>:
+      <div style={{textAlign:"center",padding:"32px",color:C.textM}}><div style={{fontSize:12,fontWeight:900,marginBottom:10}}>FAV</div><div style={{fontWeight:700}}>お気に入りはまだありません</div></div>:
       favs.map(h=><div key={h.id} onClick={()=>onHospitalClick(h)} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:C.white,borderRadius:14,border:`1px solid ${C.border}`,marginBottom:8,cursor:"pointer"}}>
         <div style={{width:40,height:40,borderRadius:12,background:C.greenLL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>{h.emoji}</div>
         <div style={{flex:1}}><div style={{fontWeight:700,fontSize:13,color:C.text}}>{h.name}</div><div style={{fontSize:11,color:C.textM}}>{h.address}</div></div>
-        <button onClick={e=>{e.stopPropagation();onUnfav(h.id);}} style={{fontSize:20,background:"none",border:"none",cursor:"pointer"}}>❤️</button>
+        <button onClick={e=>{e.stopPropagation();onUnfav(h.id);}} style={{fontSize:11,fontWeight:800,background:"#f8fafc",border:`1px solid ${C.border}`,borderRadius:99,padding:"6px 10px",cursor:"pointer",...ff}}>解除</button>
       </div>)
     )}
     {tab==="reviews"&&(myRevs.length===0?
-      <div style={{textAlign:"center",padding:"32px",color:C.textM}}><div style={{fontSize:36,marginBottom:10}}>✏️</div><div style={{fontWeight:700}}>口コミはまだありません</div></div>:
+      <div style={{textAlign:"center",padding:"32px",color:C.textM}}><div style={{fontSize:12,fontWeight:900,marginBottom:10}}>REV</div><div style={{fontWeight:700}}>口コミはまだありません</div></div>:
       myRevs.map(r=><div key={r.id} style={{background:C.white,borderRadius:14,padding:14,border:`1px solid ${C.border}`,marginBottom:8}}>
         <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><Stars rating={r.rating} size={12}/><span style={{fontSize:11,color:C.textM}}>{r.date}</span></div>
         <div style={{fontWeight:700,fontSize:13,color:C.text,marginBottom:3}}>{r.title}</div>
@@ -914,13 +913,13 @@ function MyPage({ user, favs, bookings, myReviews, onUnfav, onLogout, onHospital
       </div>)
     )}
     {tab==="bookings"&&<div>
-      {sortedBookings.length===0 ? <div style={{textAlign:"center",padding:"32px",color:C.textM}}><div style={{fontSize:36,marginBottom:10}}>📅</div><div style={{fontWeight:700}}>予約履歴はまだありません</div></div> : sortedBookings.map((b)=>(
+      {sortedBookings.length===0 ? <div style={{textAlign:"center",padding:"32px",color:C.textM}}><div style={{fontSize:12,fontWeight:900,marginBottom:10}}>BOOK</div><div style={{fontWeight:700}}>予約履歴はまだありません</div></div> : sortedBookings.map((b)=>(
         <div key={b.id} style={{background:C.white,borderRadius:14,padding:14,border:`1px solid ${C.border}`,marginBottom:8}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
             <div style={{fontWeight:700,fontSize:13,color:C.text}}>{b.hospitalName}</div>
             <Badge green={b.status==="確定"} gold={b.status==="受診済"}>{b.status}</Badge>
           </div>
-          <div style={{fontSize:12,color:C.textS}}>📅 {b.date} {b.time} · {b.dept} {b.type==="online" ? "· オンライン" : "· 来院"}</div>
+          <div style={{fontSize:12,color:C.textS}}>{b.date} {b.time} · {b.dept} {b.type==="online" ? "· オンライン" : "· 来院"}</div>
         </div>
       ))}
     </div>}
@@ -952,7 +951,7 @@ function ClinicDash({ user, clinicProfile, clinicHospital, clinicBookings, clini
   const [saved, setSaved] = useState(false);
   const [mapUrl, setMapUrl] = useState("");
   const [docSaved, setDocSaved] = useState(false);
-  const [docF, setDocF] = useState({ name:"", title:"", dept:"内科", exp:5, specialties:"", bio:"", female:false, photo:"🧑‍⚕️" });
+  const [docF, setDocF] = useState({ name:"", title:"", dept:"内科", exp:5, specialties:"", bio:"", female:false, photo:"Dr" });
   useEffect(() => {
     setF({
       name: clinicProfile?.name || "",
@@ -1013,16 +1012,16 @@ function ClinicDash({ user, clinicProfile, clinicHospital, clinicBookings, clini
       specialties: docF.specialties.split(",").map((s) => s.trim()).filter(Boolean),
       bio: docF.bio.trim(),
       female: !!docF.female,
-      photo: docF.photo || "🧑‍⚕️",
+      photo: docF.photo || "Dr",
     });
     setDocSaved(true);
     setTimeout(() => setDocSaved(false), 1600);
-    setDocF({ name:"", title:"", dept:"内科", exp:5, specialties:"", bio:"", female:false, photo:"🧑‍⚕️" });
+    setDocF({ name:"", title:"", dept:"内科", exp:5, specialties:"", bio:"", female:false, photo:"Dr" });
   };
 
   if (!user || user.role !== "clinic") {
     return <div style={{background:C.white,borderRadius:16,padding:20,border:`1px solid ${C.border}`,textAlign:"center"}}>
-      <div style={{fontSize:30,marginBottom:8}}>🏥</div>
+      <div style={{fontSize:14,fontWeight:900,marginBottom:8,color:C.blue}}>CLINIC</div>
       <div style={{fontSize:14,fontWeight:800,color:C.text,marginBottom:6}}>医療機関会員でログインしてください</div>
       <div style={{fontSize:12,color:C.textM}}>自院情報の登録・編集は医療機関アカウントで利用できます</div>
     </div>;
@@ -1035,14 +1034,14 @@ function ClinicDash({ user, clinicProfile, clinicHospital, clinicBookings, clini
       <div style={{fontWeight:900,fontSize:17,marginBottom:2}}>{profileReady ? clinicProfile.name : "自院情報を登録してください"}</div>
       <div style={{fontSize:12,color:"#bfdbfe",marginBottom:10}}>{profileReady ? clinicProfile.address : "登録後に患者向け画面へ表示されます"}</div>
       <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-        <Badge blue>🏥 医療機関会員</Badge>
-        <Badge blue>📅 予約 {clinicBookings.length}件</Badge>
-        <Badge blue>🚨 通報 {clinicReports.length}件</Badge>
-        {profileReady && <Badge blue>📝 公開中</Badge>}
+        <Badge blue>医療機関会員</Badge>
+        <Badge blue>予約 {clinicBookings.length}件</Badge>
+        <Badge blue>通報 {clinicReports.length}件</Badge>
+        {profileReady && <Badge blue>公開中</Badge>}
       </div>
     </div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-      {[{l:"登録状態",v:profileReady?"公開中":"未登録",u:"",i:"🧾"},{l:"予約件数",v:clinicBookings.length,u:"件",i:"📅"},{l:"通報件数",v:clinicReports.length,u:"件",i:"🚨"},{l:"夜間対応",v:f.nightService?"対応":"未対応",u:"",i:"🌙"}].map(({l,v,u,i})=>(
+      {[{l:"登録状態",v:profileReady?"公開中":"未登録",u:"",i:"状態"},{l:"予約件数",v:clinicBookings.length,u:"件",i:"予約"},{l:"通報件数",v:clinicReports.length,u:"件",i:"通報"},{l:"夜間対応",v:f.nightService?"対応":"未対応",u:"",i:"夜間"}].map(({l,v,u,i})=>(
         <div key={l} style={{background:C.white,borderRadius:14,padding:14,border:`1px solid ${C.border}`}}>
           <div style={{fontSize:18,marginBottom:4}}>{i}</div>
           <div style={{fontSize:11,color:C.textM,marginBottom:2}}>{l}</div>
@@ -1071,11 +1070,11 @@ function ClinicDash({ user, clinicProfile, clinicHospital, clinicBookings, clini
       <div style={{marginTop:8}}>
         <div style={{fontSize:12,fontWeight:700,color:C.text,marginBottom:6}}>診療科目</div>
         <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-          {DEPT_OPTIONS.map((d)=><Chip key={d} active={f.depts.includes(d)} onClick={()=>toggleDept(d)}>{f.depts.includes(d)?"✓ ":""}{d}</Chip>)}
+          {DEPT_OPTIONS.map((d)=><Chip key={d} active={f.depts.includes(d)} onClick={()=>toggleDept(d)}>{d}</Chip>)}
         </div>
       </div>
       <div style={{display:"flex",flexWrap:"wrap",gap:8,marginTop:8}}>
-        {[["parking","🚗 駐車場"],["nightService","🌙 夜間対応"],["female","👩‍⚕️ 女性医師"],["online","💻 オンライン診療"]].map(([k, label]) => (
+        {[["parking","駐車場"],["nightService","夜間対応"],["female","女性医師"],["online","オンライン診療"]].map(([k, label]) => (
           <Chip key={k} active={!!f[k]} onClick={() => toggleFlag(k)}>{label}</Chip>
         ))}
       </div>
@@ -1097,7 +1096,7 @@ function ClinicDash({ user, clinicProfile, clinicHospital, clinicBookings, clini
       <input value={docF.specialties} onChange={(e)=>setDoc("specialties", e.target.value)} placeholder="専門分野（カンマ区切り）" style={{marginTop:8,width:"100%",padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,boxSizing:"border-box",...ff}} />
       <textarea value={docF.bio} onChange={(e)=>setDoc("bio", e.target.value)} rows={3} placeholder="紹介文" style={{marginTop:8,width:"100%",padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,boxSizing:"border-box",resize:"none",...ff}} />
       <div style={{display:"flex",gap:8,alignItems:"center",marginTop:8}}>
-        <Chip active={docF.female} onClick={()=>setDoc("female", !docF.female)}>👩‍⚕️ 女性医師</Chip>
+        <Chip active={docF.female} onClick={()=>setDoc("female", !docF.female)}>女性医師</Chip>
         <input value={docF.photo} onChange={(e)=>setDoc("photo", e.target.value)} placeholder="絵文字" style={{width:90,padding:"8px 10px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,...ff}} />
         <Btn sm onClick={submitDoctor}>医師を追加</Btn>
         {docSaved && <span style={{fontSize:12,color:C.green,fontWeight:700}}>保存しました</span>}
@@ -1156,7 +1155,7 @@ function ComparePanel({ items, onRemove, onOpen }) {
   if (items.length === 0) return null;
   return <div style={{background:C.white,borderRadius:16,padding:14,border:`2px solid ${C.blueL}`,marginBottom:14}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-      <div style={{fontSize:13,fontWeight:800,color:C.text}}>🏥 病院比較 ({items.length}/3)</div>
+      <div style={{fontSize:13,fontWeight:800,color:C.text}}>病院比較 ({items.length}/3)</div>
       <span style={{fontSize:11,color:C.textM}}>気になる病院を横比較</span>
     </div>
     <div style={{display:"grid",gridTemplateColumns:`repeat(${items.length}, minmax(0,1fr))`,gap:8}}>
@@ -1164,7 +1163,7 @@ function ComparePanel({ items, onRemove, onOpen }) {
         <div style={{fontSize:12,fontWeight:700,color:C.text,marginBottom:6,lineHeight:1.4}}>{h.name}</div>
         <div style={{fontSize:11,color:C.textS,marginBottom:4}}>⭐ {h.rating} / 口コミ {h.cnt}件</div>
         <div style={{fontSize:11,color:C.textS,marginBottom:4}}>⏱ {h.wait}</div>
-        <div style={{fontSize:11,color:C.textS,marginBottom:8}}>{h.online?"💻 オンライン可":"🏥 来院のみ"}</div>
+        <div style={{fontSize:11,color:C.textS,marginBottom:8}}>{h.online?"オンライン可":"来院のみ"}</div>
         <div style={{display:"flex",gap:6}}>
           <Btn sm onClick={()=>onOpen(h)}>詳細</Btn>
           <Btn sm variant="outline" onClick={()=>onRemove(h.id)}>外す</Btn>
@@ -1317,7 +1316,7 @@ export default function App() {
           bio: d.bio || "",
           rating: 0,
           cnt: 0,
-          photo: d.photo || "🧑‍⚕️",
+          photo: d.photo || "DR",
           female: !!d.female,
         }));
         setClinicDoctors(normalizedDoctors);
@@ -1413,9 +1412,9 @@ export default function App() {
         email: email.toLowerCase(),
         display_name: name.trim(),
         role,
-        avatar: role === "clinic" ? "🏥" : "👤",
+        avatar: role === "clinic" ? "CL" : "PT",
       });
-      setUser({ id: uid, name: name.trim(), email: email.toLowerCase(), role, photo: role === "clinic" ? "🏥" : "👤" });
+      setUser({ id: uid, name: name.trim(), email: email.toLowerCase(), role, photo: role === "clinic" ? "CL" : "PT" });
       await logAction("signup", { role });
       return { ok: true };
     }
@@ -1425,7 +1424,7 @@ export default function App() {
       email: email.toLowerCase(),
       passHash: passHash(pass),
       role,
-      photo: role === "clinic" ? "🏥" : "👤",
+      photo: role === "clinic" ? "CL" : "PT",
       createdAt: new Date().toISOString(),
     };
     const nextUsers = [...users, created];
@@ -1467,7 +1466,7 @@ export default function App() {
           email: normalizedEmail,
           display_name: fallbackName,
           role: fallbackRole,
-          avatar: fallbackRole === "clinic" ? "🏥" : "👤",
+          avatar: fallbackRole === "clinic" ? "CL" : "PT",
         });
         const profRes = await getProfileById(uid);
         profile = profRes.data;
@@ -1482,9 +1481,9 @@ export default function App() {
           email: profile.email,
           display_name: profile.display_name,
           role: desiredRole,
-          avatar: desiredRole === "clinic" ? "🏥" : (profile.avatar || "👤"),
+          avatar: desiredRole === "clinic" ? "CL" : (profile.avatar || "PT"),
         });
-        profile = { ...profile, role: desiredRole, avatar: desiredRole === "clinic" ? "🏥" : (profile.avatar || "👤") };
+        profile = { ...profile, role: desiredRole, avatar: desiredRole === "clinic" ? "CL" : (profile.avatar || "PT") };
       }
       setUser({ id: profile.id, name: profile.display_name, email: profile.email, role: profile.role, photo: profile.avatar });
       await logAction("login", {});
@@ -1517,7 +1516,7 @@ export default function App() {
       email: normalizedEmail,
       passHash: passHash(createId("social")),
       role,
-      photo: role === "clinic" ? "🏥" : "👤",
+      photo: role === "clinic" ? "CL" : "PT",
       createdAt: new Date().toISOString(),
     };
     const nextUsers = [...users, created];
@@ -1762,7 +1761,7 @@ export default function App() {
         exp: Number(created.exp || 0),
         specialties: created.specialties || [],
         bio: created.bio || "",
-        photo: created.photo || "🧑‍⚕️",
+        photo: created.photo || "DR",
         female: !!created.female,
       });
     }
@@ -1777,11 +1776,11 @@ export default function App() {
         email: user.email,
         display_name: user.name,
         role: "clinic",
-        avatar: "🏥",
+        avatar: "CL",
       });
     }
-    setUser((p) => ({ ...p, role: "clinic", photo: "🏥" }));
-    const nextUsers = users.map((u) => (u.email.toLowerCase() === user.email.toLowerCase() ? { ...u, role: "clinic", photo: "🏥" } : u));
+    setUser((p) => ({ ...p, role: "clinic", photo: "CL" }));
+    const nextUsers = users.map((u) => (u.email.toLowerCase() === user.email.toLowerCase() ? { ...u, role: "clinic", photo: "CL" } : u));
     setUsers(nextUsers);
     writeJSON(STORAGE_KEYS.users, nextUsers);
     await logAction("role_upgrade_clinic", {});
@@ -1811,14 +1810,14 @@ export default function App() {
       {docModal&&<Sheet title="医師プロフィール" onClose={()=>setDocModal(null)}><DoctorProfile doc={docModal} hospitalsData={allHospitals}/></Sheet>}
 
       {/* Notif panel */}
-      {showNotif&&<Sheet title="🔔 通知" onClose={()=>setShowNotif(false)}><NotifPanel bookings={userBookings}/></Sheet>}
+      {showNotif&&<Sheet title="通知" onClose={()=>setShowNotif(false)}><NotifPanel bookings={userBookings}/></Sheet>}
 
       {/* HEADER */}
       <div style={{background:isClinic?GB:G,transition:"background .4s",position:"sticky",top:0,zIndex:500,backdropFilter:"blur(10px)",boxShadow:"0 8px 24px rgba(15,23,42,.16)"}}>
         <div style={{maxWidth:760,margin:"0 auto",padding:"14px 18px 0"}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
             <button onClick={()=>{setView("home");setSelected(null);setLegalPage(null);}} style={{display:"flex",alignItems:"center",gap:7,background:"none",border:"none",cursor:"pointer",...ff}}>
-              <span style={{fontSize:18}}>🏥</span>
+              <span style={{fontSize:12,fontWeight:900,color:"#fff"}}>DR</span>
               <span style={{fontSize:17,fontWeight:900,color:C.white,letterSpacing:"-0.5px"}}>ドクターレビュー</span>
             </button>
             <div style={{display:"flex",gap:6,alignItems:"center"}}>
@@ -1828,7 +1827,7 @@ export default function App() {
                 ))}
               </div>
               {user&&<button onClick={()=>setShowNotif(true)} style={{position:"relative",width:32,height:32,borderRadius:"50%",border:"1px solid rgba(255,255,255,.3)",background:"rgba(255,255,255,.15)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>
-                🔔
+                N
                 {notifCount>0&&<span style={{position:"absolute",top:0,right:0,width:14,height:14,borderRadius:"50%",background:C.red,color:C.white,fontSize:9,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}>{notifCount}</span>}
               </button>}
               {user ? (
@@ -1842,18 +1841,18 @@ export default function App() {
           {!isClinic&&view==="home"&&<div style={{paddingBottom:14}}>
             {/* Search bar */}
             <div style={{position:"relative",marginBottom:8}}>
-              <span style={{position:"absolute",left:13,top:"50%",transform:"translateY(-50%)",fontSize:14}}>🔍</span>
+              <span style={{position:"absolute",left:13,top:"50%",transform:"translateY(-50%)",fontSize:11,fontWeight:800,color:C.textM}}>検索</span>
               <input value={search} onChange={e=>{setSearch(e.target.value);setSymptom(null);}} placeholder="病院名・診療科・地域で検索"
-                style={{width:"100%",padding:"11px 42px 11px 38px",borderRadius:14,border:"none",fontSize:13,background:"rgba(255,255,255,.97)",outline:"none",boxSizing:"border-box",boxShadow:"0 4px 16px rgba(0,0,0,.12)",...ff}}/>
+                style={{width:"100%",padding:"11px 42px 11px 56px",borderRadius:14,border:"none",fontSize:13,background:"rgba(255,255,255,.97)",outline:"none",boxSizing:"border-box",boxShadow:"0 4px 16px rgba(0,0,0,.12)",...ff}}/>
               {search&&<button onClick={()=>setSearch("")} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",fontSize:16,background:"none",border:"none",cursor:"pointer",color:C.gray}}>×</button>}
             </div>
             {/* Quick actions */}
             <div style={{display:"flex",gap:6,marginBottom:8}}>
               <button onClick={()=>setShowSymptoms(!showSymptoms)} style={{flex:1,padding:"7px",borderRadius:12,border:"none",background:showSymptoms?"white":"rgba(255,255,255,.2)",color:showSymptoms?C.green:"rgba(255,255,255,.9)",fontSize:11,fontWeight:700,cursor:"pointer",...ff,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
-                {symptom?`🩺 ${symptom.s}`:("🩺 症状から検索")} {showSymptoms?"▲":"▼"}
+                {symptom?`${symptom.s}`:("症状から検索")} {showSymptoms?"閉じる":"開く"}
               </button>
               <button onClick={()=>setShowMap(!showMap)} style={{flex:1,padding:"7px",borderRadius:12,border:"none",background:showMap?"white":"rgba(255,255,255,.2)",color:showMap?C.green:"rgba(255,255,255,.9)",fontSize:11,fontWeight:700,cursor:"pointer",...ff,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
-                🗺️ 地図で探す {showMap?"▲":"▼"}
+                地図で探す {showMap?"閉じる":"開く"}
               </button>
             </div>
             {/* Symptom picker */}
@@ -1908,7 +1907,7 @@ export default function App() {
                 </div>
               ))}
               {filtered.length===0&&<div style={{textAlign:"center",padding:"48px 0"}}>
-                <div style={{fontSize:40,marginBottom:12}}>🔍</div>
+                <div style={{fontSize:20,fontWeight:800,marginBottom:12,color:C.textM}}>検索</div>
                 <div style={{fontWeight:700,fontSize:14,color:"#374151"}}>条件に合う医療機関が見つかりません</div>
                 <div style={{fontSize:12,color:C.textM,marginTop:6}}>条件を変えて検索してみてください</div>
               </div>}
@@ -1924,11 +1923,11 @@ export default function App() {
       {/* BOTTOM NAV */}
       {!isClinic&&<div style={{position:"fixed",bottom:0,left:0,right:0,background:C.white,borderTop:`1px solid ${C.border}`,display:"flex",justifyContent:"space-around",padding:"8px 0 18px",zIndex:100,boxShadow:"0 -2px 16px rgba(0,0,0,.06)"}}>
         {[
-          {v:"home",i:"🏠",l:"ホーム"},
-          {v:"symptoms",i:"🩺",l:"症状検索"},
-          {v:"map",i:"🗺️",l:"地図"},
-          {v:"fav",i:favs.length>0?"❤️":"🤍",l:`お気に入り${favs.length>0?` (${favs.length})`:""}`,},
-          {v:"mypage",i:user?"👤":"🔑",l:user?"マイページ":"ログイン"},
+          {v:"home",i:"HOME",l:"ホーム"},
+          {v:"symptoms",i:"SYM",l:"症状検索"},
+          {v:"map",i:"MAP",l:"地図"},
+          {v:"fav",i:"FAV",l:`お気に入り${favs.length>0?` (${favs.length})`:""}`,},
+          {v:"mypage",i:user?"ME":"IN",l:user?"マイページ":"ログイン"},
         ].map(({v,i,l})=>(
           <button key={v} onClick={()=>{
             setLegalPage(null);
@@ -1938,7 +1937,7 @@ export default function App() {
             else if(v==="fav"){user?setView("mypage"):setShowAuth(true);}
             else if(v==="mypage"){user?setView("mypage"):setShowAuth(true);}
           }} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:"none",border:"none",cursor:"pointer",...ff,minWidth:56}}>
-            <span style={{fontSize:19}}>{i}</span>
+            <span style={{fontSize:10,fontWeight:900,letterSpacing:".05em",color:C.textS}}>{i}</span>
             <span style={{fontSize:9,fontWeight:600,color:(view===v||(v==="home"&&view==="detail"))?C.green:C.textM,lineHeight:1.2,textAlign:"center"}}>{l}</span>
           </button>
         ))}
