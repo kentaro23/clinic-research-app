@@ -249,58 +249,59 @@ function Sheet({ children, title, onClose, wide }) {
    MAP VIEW  (static SVG map — no API key needed)
 ═══════════════════════════════════════════ */
 function MapView({ hospitals, onSelect, userLocation, onLocate, locationError }) {
-  const points = [
-    ...hospitals.map((h) => ({ lat: h.lat, lng: h.lng })),
-    ...(userLocation ? [userLocation] : []),
-  ];
-  const minLatRaw = Math.min(...points.map((p) => p.lat));
-  const maxLatRaw = Math.max(...points.map((p) => p.lat));
-  const minLngRaw = Math.min(...points.map((p) => p.lng));
-  const maxLngRaw = Math.max(...points.map((p) => p.lng));
-  const latPad = Math.max((maxLatRaw - minLatRaw) * 0.2, 0.01);
-  const lngPad = Math.max((maxLngRaw - minLngRaw) * 0.2, 0.01);
-  const minLat = minLatRaw - latPad;
-  const maxLat = maxLatRaw + latPad;
-  const minLng = minLngRaw - lngPad;
-  const maxLng = maxLngRaw + lngPad;
-  const W=340, H=200;
-  const px = lng => ((lng-minLng)/(maxLng-minLng))*W;
-  const py = lat => (1-(lat-minLat)/(maxLat-minLat))*H;
+  const center = userLocation || { lat: 35.6812, lng: 139.7671 };
+  const mapSrc = `https://www.google.com/maps?q=${center.lat},${center.lng}&z=13&output=embed`;
+  const distanceKm = (a, b) => {
+    const R = 6371;
+    const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+    const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+    const aa =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((a.lat * Math.PI) / 180) *
+        Math.cos((b.lat * Math.PI) / 180) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(aa), Math.sqrt(1 - aa));
+    return R * c;
+  };
+  const nearHospitals = [...hospitals]
+    .map((h) => ({
+      ...h,
+      distanceKm: distanceKm(center, { lat: h.lat, lng: h.lng }),
+    }))
+    .sort((a, b) => a.distanceKm - b.distanceKm);
 
   return <div style={{background:"#e8f5e9",borderRadius:16,overflow:"hidden",position:"relative",marginBottom:16,border:`1px solid ${C.border}`}}>
     <div style={{padding:"8px 12px",background:"white",borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",gap:6}}>
       <span style={{fontSize:14}}>🗺️</span>
-      <span style={{fontSize:12,fontWeight:700,color:C.text}}>現在地周辺の医療機関</span>
+      <span style={{fontSize:12,fontWeight:700,color:C.text}}>Googleマップ（現在地中心）</span>
       <button onClick={onLocate} style={{marginLeft:"auto",fontSize:11,padding:"4px 10px",borderRadius:99,border:`1px solid ${C.border}`,background:"#f8fafc",color:C.text,cursor:"pointer",...ff}}>
         📍 現在地を取得
       </button>
     </div>
-    <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{display:"block",background:"linear-gradient(180deg,#e8f5e9 0%,#f1f8e9 100%)"}}>
-      {/* Grid lines */}
-      {[0.25,0.5,0.75].map(t=><g key={t}>
-        <line x1={px(minLng+t*(maxLng-minLng))} y1={0} x2={px(minLng+t*(maxLng-minLng))} y2={H} stroke="rgba(0,0,0,.06)" strokeWidth={1}/>
-        <line x1={0} y1={py(minLat+t*(maxLat-minLat))} x2={W} y2={py(minLat+t*(maxLat-minLat))} stroke="rgba(0,0,0,.06)" strokeWidth={1}/>
-      </g>)}
-      {/* Road hints */}
-      <path d={`M ${px(139.69)} ${py(35.68)} L ${px(139.78)} ${py(35.68)}`} stroke="rgba(255,255,255,.6)" strokeWidth={4}/>
-      <path d={`M ${px(139.74)} ${py(35.65)} L ${px(139.74)} ${py(35.70)}`} stroke="rgba(255,255,255,.6)" strokeWidth={4}/>
-      {/* Hospital pins */}
-      {hospitals.map(h=>{
-        const x=px(h.lng), y=py(h.lat);
-        return <g key={h.id} onClick={()=>onSelect(h)} style={{cursor:"pointer"}}>
-          <circle cx={x} cy={y} r={14} fill={h.verified?"#059669":"#64748b"} opacity={.9}/>
-          <circle cx={x} cy={y} r={13} fill="white" opacity={.2}/>
-          <text x={x} y={y+5} textAnchor="middle" fontSize={12}>{h.emoji}</text>
-          <text x={x} y={y+24} textAnchor="middle" fontSize={8} fill="#374151" fontWeight="bold">{h.short}</text>
-        </g>;
-      })}
-      {/* Current location */}
-      {userLocation && <>
-        <circle cx={px(userLocation.lng)} cy={py(userLocation.lat)} r={8} fill="#3b82f6" opacity={.9}/>
-        <circle cx={px(userLocation.lng)} cy={py(userLocation.lat)} r={16} fill="#3b82f6" opacity={.2}/>
-        <text x={px(userLocation.lng)} y={py(userLocation.lat)+32} textAnchor="middle" fontSize={8} fill="#1e40af" fontWeight="bold">現在地</text>
-      </>}
-    </svg>
+    <iframe
+      title="google-map"
+      src={mapSrc}
+      style={{width:"100%",height:240,border:"none",display:"block"}}
+      loading="lazy"
+      referrerPolicy="no-referrer-when-downgrade"
+    />
+    <div style={{padding:"10px 12px",background:"white",borderTop:`1px solid ${C.border}`}}>
+      <div style={{fontSize:11,fontWeight:700,color:C.text,marginBottom:8}}>近くの医療機関</div>
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        {nearHospitals.slice(0, 5).map((h)=>(
+          <div key={h.id} style={{display:"flex",alignItems:"center",gap:8}}>
+            <button onClick={()=>onSelect(h)} style={{border:"none",background:"#f0fdf4",padding:"5px 9px",borderRadius:8,cursor:"pointer",fontSize:11,fontWeight:700,color:C.green,...ff}}>
+              {h.emoji} {h.name}
+            </button>
+            <span style={{fontSize:11,color:C.textM}}>約 {h.distanceKm.toFixed(1)}km</span>
+            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(h.address)}`} target="_blank" rel="noreferrer" style={{fontSize:11,color:C.blue,textDecoration:"none",marginLeft:"auto"}}>
+              Googleマップで開く
+            </a>
+          </div>
+        ))}
+      </div>
+    </div>
     <div style={{padding:"6px 12px",background:"white",borderTop:`1px solid ${C.border}`,fontSize:10,color:C.gray}}>
       {userLocation ? `現在地: 緯度 ${userLocation.lat.toFixed(4)} / 経度 ${userLocation.lng.toFixed(4)}` : (locationError || "現在地は未取得です。ブラウザの位置情報許可が必要です。")}
     </div>
@@ -1250,7 +1251,7 @@ export default function App() {
       return { ok: true };
     }
     const target = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-    if (!target) return { ok: false, error: "ユーザーが見つかりません" };
+    if (!target) return { ok: false, error: "ユーザーが見つかりません（Supabase未設定時は、このブラウザで登録したアカウントのみログイン可能です）" };
     if (target.passHash !== passHash(pass)) return { ok: false, error: "メールアドレスまたはパスワードが違います" };
     saveSession(target.id);
     setUser(toClientUser(target));
