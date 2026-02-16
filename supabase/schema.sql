@@ -7,7 +7,7 @@ create table if not exists public.profiles (
   email text not null unique,
   display_name text not null,
   role text not null check (role in ('patient', 'clinic', 'admin')),
-  avatar text not null default '👤',
+  avatar text not null default 'PT',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -32,6 +32,7 @@ create table if not exists public.clinics (
   night_service boolean not null default false,
   female boolean not null default false,
   online boolean not null default false,
+  logo_url text,
   verified boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -59,6 +60,8 @@ alter table if exists public.bookings
   alter column clinic_id type text using clinic_id::text;
 alter table if exists public.bookings
   add column if not exists clinic_name text;
+alter table if exists public.clinics
+  add column if not exists logo_url text;
 
 -- Reviews
 create table if not exists public.reviews (
@@ -94,7 +97,7 @@ create table if not exists public.clinic_doctors (
   exp integer not null default 0,
   specialties text[] not null default array[]::text[],
   bio text not null default '',
-  photo text not null default '🧑‍⚕️',
+  photo text not null default 'DR',
   female boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

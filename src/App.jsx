@@ -91,7 +91,7 @@ const hospitals = [
     tel:"03-1234-5678", hours:"月〜金 8:30〜17:00 / 土 8:30〜12:30 / 日祝 休診",
     depts:["内科","外科","整形外科","小児科","産婦人科"],
     rating:4.3, cnt:128, wait:"約30分", parking:true, nightService:true,
-    female:true, online:true, verified:true, today:true, emoji:"MC",
+    female:true, online:true, verified:true, today:true, logoUrl:"",
     desc:"都心に位置する総合病院。最新MRI・CT設備完備、専門医チームによる高度医療を提供。2024年新棟完成。",
     access:"東京駅丸の内南口より徒歩5分 / 地下鉄二重橋前駅より徒歩2分",
     beds:320, founded:1978,
@@ -108,7 +108,7 @@ const hospitals = [
     tel:"03-2345-6789", hours:"月〜土 9:00〜18:00 / 日祝 休診",
     depts:["内科","小児科","皮膚科"],
     rating:4.7, cnt:89, wait:"約15分", parking:false, nightService:false,
-    female:false, online:true, verified:true, today:true, emoji:"CL",
+    female:false, online:true, verified:true, today:true, logoUrl:"",
     desc:"地域密着型のアットホームなクリニック。子どもから高齢者まで家族全員のかかりつけ医として親しまれています。",
     access:"渋谷駅ハチ公口より徒歩8分 / 表参道駅より徒歩10分",
     beds:0, founded:2012,
@@ -123,7 +123,7 @@ const hospitals = [
     tel:"03-3456-7890", hours:"月〜金 10:00〜19:30 / 土 10:00〜17:00",
     depts:["皮膚科"],
     rating:4.6, cnt:73, wait:"約20分", parking:false, nightService:false,
-    female:true, online:false, verified:true, today:true, emoji:"SK",
+    female:true, online:false, verified:true, today:true, logoUrl:"",
     desc:"皮膚科専門クリニック。アトピー・ニキビから美容皮膚科まで対応。最新レーザー機器完備。",
     access:"新宿三丁目駅E5出口より徒歩1分",
     beds:0, founded:2019,
@@ -138,7 +138,7 @@ const hospitals = [
     tel:"03-4567-8901", hours:"月〜日 18:00〜翌2:00（年中無休）",
     depts:["内科","小児科"],
     rating:4.1, cnt:56, wait:"約45分", parking:false, nightService:true,
-    female:false, online:false, verified:false, today:true, emoji:"NH",
+    female:false, online:false, verified:false, today:true, logoUrl:"",
     desc:"夜間・深夜専門クリニック。仕事帰りや休日の急な体調不良に年中無休で対応します。",
     access:"六本木駅2番出口より徒歩3分",
     beds:0, founded:2020,
@@ -168,7 +168,7 @@ const toHospitalFromProfile = (profile) => ({
   online: !!profile.online,
   verified: false,
   today: true,
-  emoji: "CL",
+  logoUrl: profile.logoUrl || "",
   desc: profile.desc || "施設情報を準備中です。",
   access: profile.access || "アクセス情報を準備中です。",
   beds: Number(profile.beds) || 0,
@@ -198,6 +198,19 @@ function StarSVG({ filled, size=14 }) {
     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
   </svg>;
 }
+function Glyph({ name, size=16, color="currentColor", stroke=1.8 }) {
+  const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: stroke, strokeLinecap: "round", strokeLinejoin: "round" };
+  if (name === "map") return <svg {...common}><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14"/><path d="M15 6v14"/></svg>;
+  if (name === "heart") return <svg {...common}><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 5.65-7 10-7 10z"/></svg>;
+  if (name === "calendar") return <svg {...common}><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>;
+  if (name === "review") return <svg {...common}><path d="M4 4h16v12H8l-4 4z"/></svg>;
+  if (name === "home") return <svg {...common}><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>;
+  if (name === "user") return <svg {...common}><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-3 4.5-5 8-5s6.5 2 8 5"/></svg>;
+  if (name === "login") return <svg {...common}><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/><path d="M21 3v18"/></svg>;
+  if (name === "bell") return <svg {...common}><path d="M6 8a6 6 0 1 1 12 0v6l2 2H4l2-2z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>;
+  if (name === "hospital") return <svg {...common}><path d="M4 20V6l8-3 8 3v14"/><path d="M9 10h6M12 7v6"/><path d="M10 20v-4h4v4"/></svg>;
+  return <svg {...common}><circle cx="12" cy="12" r="8"/></svg>;
+}
 function Stars({ rating, size=13, interactive=false, onRate }) {
   const [hov, setHov] = useState(0);
   return <div style={{display:"flex",gap:1,cursor:interactive?"pointer":"default"}}>
@@ -223,6 +236,18 @@ function Chip({ children, active, onClick, blue, sm, color }) {
 }
 function Av({ text, size=36, bg=G, emoji }) {
   return <div style={{width:size,height:size,borderRadius:"50%",background:bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:emoji?size*.46:size*.4,fontWeight:800,color:"white",flexShrink:0}}>{emoji||text}</div>;
+}
+function HospitalMark({ hospital, size=52, rounded=14, compact=false }) {
+  const src = hospital?.logoUrl;
+  if (src) {
+    return <div style={{width:size,height:size,borderRadius:rounded,overflow:"hidden",border:`1px solid ${C.border}`,flexShrink:0,background:C.white}}>
+      <img src={src} alt={`${hospital?.name || "clinic"} logo`} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}} />
+    </div>;
+  }
+  return <div style={{width:size,height:size,borderRadius:rounded,background:C.greenLL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:800,color:C.greenD,flexShrink:0,gap:compact?0:6}}>
+    <Glyph name="hospital" size={compact?16:18} color={C.greenD} />
+    {!compact && <span>{hospital?.short || "CL"}</span>}
+  </div>;
 }
 function Btn({ children, onClick, style={}, variant="green", sm, disabled }) {
   const bg = variant==="green"?G:variant==="blue"?GB:variant==="outline"?C.white:variant==="ghost"?"transparent":C.grayL;
@@ -281,7 +306,10 @@ function MapView({ hospitals, onSelect, userLocation, onLocate, locationError })
 
   return <div style={{background:"#e8f5e9",borderRadius:16,overflow:"hidden",position:"relative",marginBottom:16,border:`1px solid ${C.border}`}}>
     <div style={{padding:"8px 12px",background:"white",borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",gap:6}}>
-      <span style={{fontSize:12,fontWeight:700,color:C.text}}>Googleマップ（現在地中心）</span>
+      <span style={{display:"inline-flex",alignItems:"center",gap:6,fontSize:12,fontWeight:700,color:C.text}}>
+        <Glyph name="map" size={14} color={C.blue} />
+        Googleマップ（現在地中心）
+      </span>
       <button onClick={onLocate} style={{marginLeft:"auto",fontSize:11,padding:"4px 10px",borderRadius:99,border:`1px solid ${C.border}`,background:"#f8fafc",color:C.text,cursor:"pointer",...ff}}>
         現在地を取得
       </button>
@@ -298,8 +326,9 @@ function MapView({ hospitals, onSelect, userLocation, onLocate, locationError })
       <div style={{display:"flex",flexDirection:"column",gap:8}}>
         {nearHospitals.slice(0, 5).map((h)=>(
           <div key={h.id} style={{display:"flex",alignItems:"center",gap:8}}>
-            <button onClick={()=>onSelect(h)} style={{border:"none",background:"#f0fdf4",padding:"5px 9px",borderRadius:8,cursor:"pointer",fontSize:11,fontWeight:700,color:C.green,...ff}}>
-              {h.emoji} {h.name}
+            <button onClick={()=>onSelect(h)} style={{border:"none",background:"#f0fdf4",padding:"5px 9px",borderRadius:8,cursor:"pointer",fontSize:11,fontWeight:700,color:C.green,...ff,display:"inline-flex",alignItems:"center",gap:6}}>
+              <Glyph name="hospital" size={13} color={C.greenD} />
+              {h.name}
             </button>
             <span style={{fontSize:11,color:C.textM}}>約 {h.distanceKm.toFixed(1)}km</span>
             <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(h.address)}`} target="_blank" rel="noreferrer" style={{fontSize:11,color:C.blue,textDecoration:"none",marginLeft:"auto"}}>
@@ -419,7 +448,10 @@ function Booking({ hospital, user, onCreateBooking, onRequireLogin }) {
       onFocus={e=>e.target.style.borderColor=C.green} onBlur={e=>e.target.style.borderColor=C.border}/></div>
     <div><label style={{fontSize:12,fontWeight:700,color:"#374151",display:"block",marginBottom:7}}>時間帯</label>
     <div style={{display:"flex",flexWrap:"wrap",gap:6}}>{times.map(t=><Chip key={t} active={time===t} onClick={()=>setTime(t)}>{t}</Chip>)}</div></div>
-    <div style={{padding:"10px 13px",background:"#eff6ff",borderRadius:12,border:"1px solid #bfdbfe",fontSize:12,color:C.blue}}>ℹ️ 前日18時にリマインドメールをお送りします</div>
+    <div style={{padding:"10px 13px",background:"#eff6ff",borderRadius:12,border:"1px solid #bfdbfe",fontSize:12,color:C.blue,display:"flex",alignItems:"center",gap:7}}>
+      <Glyph name="bell" size={14} color={C.blue} />
+      前日18時にリマインドメールをお送りします
+    </div>
     {!user && <div style={{padding:"10px 13px",background:"#fef3c7",borderRadius:12,border:"1px solid #fcd34d",fontSize:12,color:"#92400e"}}>ログインすると予約を確定できます</div>}
     <Btn onClick={confirmBooking} disabled={!date||!time} style={{width:"100%",padding:13,borderRadius:14,fontSize:14}}>予約を確定する</Btn>
   </div>;
@@ -500,18 +532,20 @@ function Auth({ onLogin, onSignup, onSocialLogin, onClose }) {
 function NotifPanel({ bookings = [] }) {
   const bookingNotifs = bookings.slice(0, 5).map((b) => ({
     id: b.id,
-    icon: "予約",
+    icon: "calendar",
     title: "予約確定",
     body: `${b.hospitalName}（${b.dept}） ${b.date} ${b.time} の予約が確定しました`,
     time: "最新",
     unread: true,
   }));
   const notifs = bookingNotifs.length > 0 ? bookingNotifs : [
-    { id:"empty", icon:"ℹ️", title:"お知らせ", body:"まだ通知はありません", time:"", unread:false },
+    { id:"empty", icon:"bell", title:"お知らせ", body:"まだ通知はありません", time:"", unread:false },
   ];
   return <div>
     {notifs.map(n=><div key={n.id} style={{display:"flex",gap:12,padding:"12px 0",borderBottom:`1px solid ${C.grayL}`,alignItems:"flex-start"}}>
-      <div style={{width:38,height:38,borderRadius:12,background:n.unread?C.greenLL:C.grayL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>{n.icon}</div>
+      <div style={{width:38,height:38,borderRadius:12,background:n.unread?C.greenLL:C.grayL,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+        <Glyph name={n.icon} size={16} color={n.unread?C.green:C.gray} />
+      </div>
       <div style={{flex:1}}>
         <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
           <span style={{fontWeight:700,fontSize:13,color:C.text}}>{n.title}</span>
@@ -659,7 +693,7 @@ function HospitalCard({ h, onClick, isFav, onFavToggle, user, compareActive, onT
   return <div onClick={()=>onClick(h)} onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
     style={{background:C.white,borderRadius:18,border:`1px solid ${C.border}`,padding:16,cursor:"pointer",transition:"all .25s",boxShadow:hov?"0 8px 28px rgba(16,185,129,.14)":"0 2px 10px rgba(0,0,0,.05)",transform:hov?"translateY(-2px)":"none"}}>
     <div style={{display:"flex",gap:14}}>
-      <div style={{width:52,height:52,borderRadius:14,background:C.greenLL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:800,color:C.greenD,flexShrink:0}}>{h.short || "CL"}</div>
+      <HospitalMark hospital={h} size={52} rounded={14} />
       <div style={{flex:1,minWidth:0}}>
         <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:2}}>
           <div style={{fontWeight:800,fontSize:14,color:C.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{h.name}</div>
@@ -711,7 +745,7 @@ function HospitalDetail({ hospital, doctorsData, onBack, onDoctorClick, isFav, o
       <div style={{position:"absolute",top:-30,right:-30,width:130,height:130,borderRadius:"50%",background:"rgba(255,255,255,.06)"}}/>
       <button onClick={onBack} style={{background:"rgba(255,255,255,.15)",border:"none",borderRadius:99,padding:"6px 12px",color:C.white,fontSize:12,cursor:"pointer",marginBottom:12,...ff}}>← 戻る</button>
       <div style={{display:"flex",gap:14}}>
-        <div style={{width:54,height:54,borderRadius:16,background:"rgba(255,255,255,.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:900,color:"#fff",flexShrink:0}}>{hospital.short || "CL"}</div>
+        <HospitalMark hospital={hospital} size={54} rounded={16} compact />
         <div style={{flex:1}}>
           <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:4}}>
             <h2 style={{fontWeight:900,fontSize:17,color:C.white,margin:0}}>{hospital.name}</h2>
@@ -791,7 +825,10 @@ function HospitalDetail({ hospital, doctorsData, onBack, onDoctorClick, isFav, o
 
     {tab==="access"&&<div style={{background:C.white,borderRadius:16,padding:14,border:`1px solid ${C.border}`}}>
       <div style={{background:C.greenLL,borderRadius:12,height:160,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:14,border:`1px solid ${C.greenL}`,flexDirection:"column",gap:8}}>
-        <span style={{fontSize:12,fontWeight:900,color:C.green,border:`1px solid ${C.greenL}`,borderRadius:99,padding:"4px 10px"}}>MAP</span>
+        <span style={{fontSize:12,fontWeight:900,color:C.green,border:`1px solid ${C.greenL}`,borderRadius:99,padding:"4px 10px",display:"inline-flex",alignItems:"center",gap:6}}>
+          <Glyph name="map" size={13} color={C.greenD} />
+          地図
+        </span>
         <span style={{fontSize:12,color:C.green,fontWeight:700}}>{hospital.address}</span>
         <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hospital.address)}`} target="_blank" rel="noreferrer"
           style={{fontSize:11,color:C.blue,fontWeight:700,textDecoration:"none",padding:"5px 12px",borderRadius:99,background:"#eff6ff",border:"1px solid #bfdbfe"}}>
@@ -883,9 +920,9 @@ function MyPage({ user, favs, bookings, myReviews, onUnfav, onLogout, onHospital
       </div>}
     </div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
-      {[{l:"お気に入り",v:favs.length,i:"FAV"},{l:"投稿口コミ",v:myRevs.length,i:"REV"},{l:"予約件数",v:bookings.length,i:"BK"}].map(({l,v,i})=>(
+      {[{l:"お気に入り",v:favs.length,i:"heart"},{l:"投稿口コミ",v:myRevs.length,i:"review"},{l:"予約件数",v:bookings.length,i:"calendar"}].map(({l,v,i})=>(
         <div key={l} style={{background:C.white,borderRadius:14,padding:12,border:`1px solid ${C.border}`,textAlign:"center"}}>
-          <div style={{fontSize:20,marginBottom:4}}>{i}</div>
+          <div style={{display:"flex",justifyContent:"center",marginBottom:6}}><Glyph name={i} size={16} color={C.blue} /></div>
           <div style={{fontSize:20,fontWeight:900,color:C.text}}>{v}</div>
           <div style={{fontSize:10,color:C.textM}}>{l}</div>
         </div>
@@ -897,15 +934,15 @@ function MyPage({ user, favs, bookings, myReviews, onUnfav, onLogout, onHospital
       ))}
     </div>
     {tab==="fav"&&(favs.length===0?
-      <div style={{textAlign:"center",padding:"32px",color:C.textM}}><div style={{fontSize:12,fontWeight:900,marginBottom:10}}>FAV</div><div style={{fontWeight:700}}>お気に入りはまだありません</div></div>:
+      <div style={{textAlign:"center",padding:"32px",color:C.textM}}><div style={{display:"flex",justifyContent:"center",marginBottom:10}}><Glyph name="heart" size={18} color={C.textM} /></div><div style={{fontWeight:700}}>お気に入りはまだありません</div></div>:
       favs.map(h=><div key={h.id} onClick={()=>onHospitalClick(h)} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:C.white,borderRadius:14,border:`1px solid ${C.border}`,marginBottom:8,cursor:"pointer"}}>
-        <div style={{width:40,height:40,borderRadius:12,background:C.greenLL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>{h.emoji}</div>
+        <HospitalMark hospital={h} size={40} rounded={12} compact />
         <div style={{flex:1}}><div style={{fontWeight:700,fontSize:13,color:C.text}}>{h.name}</div><div style={{fontSize:11,color:C.textM}}>{h.address}</div></div>
         <button onClick={e=>{e.stopPropagation();onUnfav(h.id);}} style={{fontSize:11,fontWeight:800,background:"#f8fafc",border:`1px solid ${C.border}`,borderRadius:99,padding:"6px 10px",cursor:"pointer",...ff}}>解除</button>
       </div>)
     )}
     {tab==="reviews"&&(myRevs.length===0?
-      <div style={{textAlign:"center",padding:"32px",color:C.textM}}><div style={{fontSize:12,fontWeight:900,marginBottom:10}}>REV</div><div style={{fontWeight:700}}>口コミはまだありません</div></div>:
+      <div style={{textAlign:"center",padding:"32px",color:C.textM}}><div style={{display:"flex",justifyContent:"center",marginBottom:10}}><Glyph name="review" size={18} color={C.textM} /></div><div style={{fontWeight:700}}>口コミはまだありません</div></div>:
       myRevs.map(r=><div key={r.id} style={{background:C.white,borderRadius:14,padding:14,border:`1px solid ${C.border}`,marginBottom:8}}>
         <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><Stars rating={r.rating} size={12}/><span style={{fontSize:11,color:C.textM}}>{r.date}</span></div>
         <div style={{fontWeight:700,fontSize:13,color:C.text,marginBottom:3}}>{r.title}</div>
@@ -913,7 +950,7 @@ function MyPage({ user, favs, bookings, myReviews, onUnfav, onLogout, onHospital
       </div>)
     )}
     {tab==="bookings"&&<div>
-      {sortedBookings.length===0 ? <div style={{textAlign:"center",padding:"32px",color:C.textM}}><div style={{fontSize:12,fontWeight:900,marginBottom:10}}>BOOK</div><div style={{fontWeight:700}}>予約履歴はまだありません</div></div> : sortedBookings.map((b)=>(
+      {sortedBookings.length===0 ? <div style={{textAlign:"center",padding:"32px",color:C.textM}}><div style={{display:"flex",justifyContent:"center",marginBottom:10}}><Glyph name="calendar" size={18} color={C.textM} /></div><div style={{fontWeight:700}}>予約履歴はまだありません</div></div> : sortedBookings.map((b)=>(
         <div key={b.id} style={{background:C.white,borderRadius:14,padding:14,border:`1px solid ${C.border}`,marginBottom:8}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
             <div style={{fontWeight:700,fontSize:13,color:C.text}}>{b.hospitalName}</div>
@@ -947,6 +984,7 @@ function ClinicDash({ user, clinicProfile, clinicHospital, clinicBookings, clini
     nightService: !!clinicProfile?.nightService,
     female: !!clinicProfile?.female,
     online: !!clinicProfile?.online,
+    logoUrl: clinicProfile?.logoUrl || "",
   }));
   const [saved, setSaved] = useState(false);
   const [mapUrl, setMapUrl] = useState("");
@@ -970,6 +1008,7 @@ function ClinicDash({ user, clinicProfile, clinicHospital, clinicBookings, clini
       nightService: !!clinicProfile?.nightService,
       female: !!clinicProfile?.female,
       online: !!clinicProfile?.online,
+      logoUrl: clinicProfile?.logoUrl || "",
     });
   }, [clinicProfile]);
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
@@ -985,6 +1024,20 @@ function ClinicDash({ user, clinicProfile, clinicHospital, clinicBookings, clini
     set("lat", Number(hit[1]));
     set("lng", Number(hit[2]));
   };
+  const onLogoFile = (file) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      alert("画像ファイルを選択してください。");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      alert("画像サイズは2MB以下にしてください。");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => set("logoUrl", String(reader.result || ""));
+    reader.readAsDataURL(file);
+  };
   const submit = () => {
     if (!f.name.trim() || !f.address.trim()) return;
     onSaveClinicProfile({
@@ -993,6 +1046,7 @@ function ClinicDash({ user, clinicProfile, clinicHospital, clinicBookings, clini
       lng: Number(f.lng),
       beds: Number(f.beds),
       founded: Number(f.founded),
+      logoUrl: f.logoUrl || "",
     });
     setSaved(true);
     setTimeout(() => setSaved(false), 1600);
@@ -1058,6 +1112,18 @@ function ClinicDash({ user, clinicProfile, clinicHospital, clinicBookings, clini
         <input value={f.hours} onChange={(e)=>set("hours", e.target.value)} placeholder="診療時間" style={{padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,...ff}} />
         <input value={f.lat} onChange={(e)=>set("lat", e.target.value)} placeholder="緯度" style={{padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,...ff}} />
         <input value={f.lng} onChange={(e)=>set("lng", e.target.value)} placeholder="経度" style={{padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,...ff}} />
+      </div>
+      <div style={{marginTop:10,padding:10,border:`1px dashed ${C.border}`,borderRadius:12,background:"#f8fafc"}}>
+        <div style={{fontSize:12,fontWeight:700,color:C.text,marginBottom:8}}>病院アイコン画像</div>
+        <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+          <HospitalMark hospital={{ ...f, short: f.short || f.name?.slice(0, 2) }} size={52} rounded={14} compact />
+          <label style={{fontSize:12,padding:"7px 12px",borderRadius:99,border:`1px solid ${C.border}`,background:C.white,cursor:"pointer",...ff}}>
+            画像を選択
+            <input type="file" accept="image/*" onChange={(e)=>onLogoFile(e.target.files?.[0])} style={{display:"none"}} />
+          </label>
+          {f.logoUrl && <button onClick={()=>set("logoUrl","")} style={{fontSize:11,padding:"7px 10px",borderRadius:99,border:`1px solid ${C.border}`,background:"#fff",cursor:"pointer",...ff}}>画像を削除</button>}
+        </div>
+        <div style={{fontSize:11,color:C.textM,marginTop:6}}>推奨: 256x256px以上 / PNG・JPG / 2MB以下</div>
       </div>
       <input value={f.address} onChange={(e)=>set("address", e.target.value)} placeholder="住所" style={{marginTop:8,width:"100%",padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,boxSizing:"border-box",...ff}} />
       <div style={{display:"flex",gap:8,marginTop:8}}>
@@ -1161,8 +1227,8 @@ function ComparePanel({ items, onRemove, onOpen }) {
     <div style={{display:"grid",gridTemplateColumns:`repeat(${items.length}, minmax(0,1fr))`,gap:8}}>
       {items.map((h)=><div key={h.id} style={{border:`1px solid ${C.border}`,borderRadius:12,padding:10}}>
         <div style={{fontSize:12,fontWeight:700,color:C.text,marginBottom:6,lineHeight:1.4}}>{h.name}</div>
-        <div style={{fontSize:11,color:C.textS,marginBottom:4}}>⭐ {h.rating} / 口コミ {h.cnt}件</div>
-        <div style={{fontSize:11,color:C.textS,marginBottom:4}}>⏱ {h.wait}</div>
+        <div style={{fontSize:11,color:C.textS,marginBottom:4}}>評価 {h.rating} / 口コミ {h.cnt}件</div>
+        <div style={{fontSize:11,color:C.textS,marginBottom:4}}>待ち時間 {h.wait}</div>
         <div style={{fontSize:11,color:C.textS,marginBottom:8}}>{h.online?"オンライン可":"来院のみ"}</div>
         <div style={{display:"flex",gap:6}}>
           <Btn sm onClick={()=>onOpen(h)}>詳細</Btn>
@@ -1259,6 +1325,7 @@ export default function App() {
           nightService: c.night_service,
           female: c.female,
           online: c.online,
+          logoUrl: c.logo_url || "",
         }));
         setClinicProfiles(normalized);
       }
@@ -1734,6 +1801,7 @@ export default function App() {
         night_service: !!nextProfile.nightService,
         female: !!nextProfile.female,
         online: !!nextProfile.online,
+        logo_url: nextProfile.logoUrl || "",
       });
     }
     await logAction("clinic_profile_upsert", { clinicId: nextProfile.id });
@@ -1826,8 +1894,8 @@ export default function App() {
                   <button key={m} onClick={()=>{setMode(m);setView("home");setSelected(null);}} style={{padding:"5px 9px",borderRadius:99,border:"none",fontSize:10,fontWeight:700,cursor:"pointer",...ff,background:mode===m?C.white:"transparent",color:mode===m?(m==="patient"?C.green:C.blue):"rgba(255,255,255,.85)",transition:"all .2s"}}>{l}</button>
                 ))}
               </div>
-              {user&&<button onClick={()=>setShowNotif(true)} style={{position:"relative",width:32,height:32,borderRadius:"50%",border:"1px solid rgba(255,255,255,.3)",background:"rgba(255,255,255,.15)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>
-                N
+              {user&&<button onClick={()=>setShowNotif(true)} style={{position:"relative",width:32,height:32,borderRadius:"50%",border:"1px solid rgba(255,255,255,.3)",background:"rgba(255,255,255,.15)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <Glyph name="bell" size={14} color="#ffffff" />
                 {notifCount>0&&<span style={{position:"absolute",top:0,right:0,width:14,height:14,borderRadius:"50%",background:C.red,color:C.white,fontSize:9,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}>{notifCount}</span>}
               </button>}
               {user ? (
@@ -1923,11 +1991,11 @@ export default function App() {
       {/* BOTTOM NAV */}
       {!isClinic&&<div style={{position:"fixed",bottom:0,left:0,right:0,background:C.white,borderTop:`1px solid ${C.border}`,display:"flex",justifyContent:"space-around",padding:"8px 0 18px",zIndex:100,boxShadow:"0 -2px 16px rgba(0,0,0,.06)"}}>
         {[
-          {v:"home",i:"HOME",l:"ホーム"},
-          {v:"symptoms",i:"SYM",l:"症状検索"},
-          {v:"map",i:"MAP",l:"地図"},
-          {v:"fav",i:"FAV",l:`お気に入り${favs.length>0?` (${favs.length})`:""}`,},
-          {v:"mypage",i:user?"ME":"IN",l:user?"マイページ":"ログイン"},
+          {v:"home",i:"home",l:"ホーム"},
+          {v:"symptoms",i:"review",l:"症状検索"},
+          {v:"map",i:"map",l:"地図"},
+          {v:"fav",i:"heart",l:`お気に入り${favs.length>0?` (${favs.length})`:""}`,},
+          {v:"mypage",i:user?"user":"login",l:user?"マイページ":"ログイン"},
         ].map(({v,i,l})=>(
           <button key={v} onClick={()=>{
             setLegalPage(null);
@@ -1937,7 +2005,7 @@ export default function App() {
             else if(v==="fav"){user?setView("mypage"):setShowAuth(true);}
             else if(v==="mypage"){user?setView("mypage"):setShowAuth(true);}
           }} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:"none",border:"none",cursor:"pointer",...ff,minWidth:56}}>
-            <span style={{fontSize:10,fontWeight:900,letterSpacing:".05em",color:C.textS}}>{i}</span>
+            <span style={{display:"flex",alignItems:"center",justifyContent:"center",height:16}}><Glyph name={i} size={14} color={C.textS} /></span>
             <span style={{fontSize:9,fontWeight:600,color:(view===v||(v==="home"&&view==="detail"))?C.green:C.textM,lineHeight:1.2,textAlign:"center"}}>{l}</span>
           </button>
         ))}
