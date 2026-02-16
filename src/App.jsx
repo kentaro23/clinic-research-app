@@ -1,4 +1,19 @@
 import { useState, useEffect, useRef } from "react";
+import { isSupabaseEnabled } from "./lib/supabaseClient";
+import {
+  getSessionUser,
+  getProfileById,
+  insertAuditLog,
+  insertBooking,
+  insertReviewReport,
+  listBookings,
+  listClinicProfiles,
+  signInWithEmail,
+  signOutSession,
+  signUpWithEmail,
+  upsertClinic,
+  upsertProfile,
+} from "./lib/supabaseApi";
 
 const STORAGE_KEYS = {
   users: "clinic_app_users_v1",
@@ -6,6 +21,8 @@ const STORAGE_KEYS = {
   bookings: "clinic_app_bookings_v1",
   favorites: "clinic_app_favorites_v1",
   clinicProfiles: "clinic_app_clinic_profiles_v1",
+  reviewReports: "clinic_app_review_reports_v1",
+  auditLogs: "clinic_app_audit_logs_v1",
 };
 
 const readJSON = (key, fallback) => {
@@ -408,19 +425,19 @@ function Auth({ onLogin, onSignup, onSocialLogin, onClose }) {
   const [email, setEmail] = useState(""); const [pass, setPass] = useState(""); const [name, setName] = useState(""); const [role, setRole] = useState("patient");
   const [err, setErr] = useState("");
   const inp = {width:"100%",padding:"11px 14px",borderRadius:12,border:`1.5px solid ${C.border}`,fontSize:13,outline:"none",boxSizing:"border-box",...ff};
-  const submit = () => {
+  const submit = async () => {
     setErr("");
     const payload = { name, email: email.trim(), pass, role };
-    const res = tab === "login" ? onLogin?.(payload) : onSignup?.(payload);
+    const res = tab === "login" ? await onLogin?.(payload) : await onSignup?.(payload);
     if (!res?.ok) {
       setErr(res?.error || "認証に失敗しました");
       return;
     }
     onClose?.();
   };
-  const social = (provider) => {
+  const social = async (provider) => {
     setErr("");
-    const res = onSocialLogin?.({
+    const res = await onSocialLogin?.({
       provider,
       name,
       email: email.trim(),
@@ -562,7 +579,7 @@ function ReviewForm({ hospital, user, onClose }) {
 /* ═══════════════════════════════════════════
    REVIEW CARD
 ═══════════════════════════════════════════ */
-function ReviewCard({ review, onDoctorClick, clinicView=false }) {
+function ReviewCard({ review, onDoctorClick, clinicView=false, onReport }) {
   const [helpful, setHelpful] = useState(review.helpful);
   const [voted, setVoted] = useState(false);
   const [showReplyBox, setShowReplyBox] = useState(false);
@@ -595,6 +612,7 @@ function ReviewCard({ review, onDoctorClick, clinicView=false }) {
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
       <span style={{fontSize:11,color:C.textM}}>参考になりましたか？</span>
       <div style={{display:"flex",gap:7}}>
+        {!clinicView&&<Btn sm variant="outline" onClick={()=>onReport?.(review)}>通報</Btn>}
         {clinicView&&!replySaved&&<Btn sm variant="outline" onClick={()=>setShowReplyBox(!showReplyBox)}>返信する</Btn>}
         <button onClick={()=>{if(!voted){setHelpful(h=>h+1);setVoted(true);}}} style={{display:"flex",alignItems:"center",gap:5,padding:"5px 12px",borderRadius:99,border:`1px solid ${voted?C.green:C.border}`,background:voted?C.greenLL:"#f9fafb",color:voted?C.green:C.gray,fontSize:11,fontWeight:700,cursor:"pointer",...ff}}>
           👍 {helpful}
@@ -653,7 +671,7 @@ function HospitalCard({ h, onClick, isFav, onFavToggle, user }) {
 /* ═══════════════════════════════════════════
    HOSPITAL DETAIL
 ═══════════════════════════════════════════ */
-function HospitalDetail({ hospital, onBack, onDoctorClick, isFav, onFavToggle, user, onCreateBooking, onRequireLogin }) {
+function HospitalDetail({ hospital, onBack, onDoctorClick, isFav, onFavToggle, user, onCreateBooking, onRequireLogin, onReportReview }) {
   const [tab, setTab] = useState("reviews");
   const [showForm, setShowForm] = useState(false);
   const [modal, setModal] = useState(null); // "book" | "online"
@@ -717,7 +735,7 @@ function HospitalDetail({ hospital, onBack, onDoctorClick, isFav, onFavToggle, u
         <ReviewForm hospital={hospital} user={user} onClose={()=>setShowForm(false)}/>
       </div>}
       <div style={{display:"flex",flexDirection:"column",gap:10}}>
-        {hospital.reviews.map(r=><ReviewCard key={r.id} review={r} onDoctorClick={onDoctorClick}/>)}
+        {hospital.reviews.map(r=><ReviewCard key={r.id} review={r} onDoctorClick={onDoctorClick} onReport={(review)=>onReportReview?.(review, hospital)}/>)}
       </div>
     </div>}
 
@@ -878,7 +896,7 @@ function MyPage({ user, favs, bookings, onUnfav, onLogout, onHospitalClick }) {
 /* ═══════════════════════════════════════════
    CLINIC DASHBOARD
 ═══════════════════════════════════════════ */
-function ClinicDash({ user, clinicProfile, clinicBookings, onSaveClinicProfile, onDoctorClick }) {
+function ClinicDash({ user, clinicProfile, clinicBookings, clinicReports, onSaveClinicProfile, onDoctorClick }) {
   const [f, setF] = useState(() => ({
     name: clinicProfile?.name || "",
     short: clinicProfile?.short || "",
@@ -951,11 +969,12 @@ function ClinicDash({ user, clinicProfile, clinicBookings, onSaveClinicProfile, 
       <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
         <Badge blue>🏥 医療機関会員</Badge>
         <Badge blue>📅 予約 {clinicBookings.length}件</Badge>
+        <Badge blue>🚨 通報 {clinicReports.length}件</Badge>
         {profileReady && <Badge blue>📝 公開中</Badge>}
       </div>
     </div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-      {[{l:"登録状態",v:profileReady?"公開中":"未登録",u:"",i:"🧾"},{l:"予約件数",v:clinicBookings.length,u:"件",i:"📅"},{l:"オンライン対応",v:f.online?"対応":"未対応",u:"",i:"💻"},{l:"夜間対応",v:f.nightService?"対応":"未対応",u:"",i:"🌙"}].map(({l,v,u,i})=>(
+      {[{l:"登録状態",v:profileReady?"公開中":"未登録",u:"",i:"🧾"},{l:"予約件数",v:clinicBookings.length,u:"件",i:"📅"},{l:"通報件数",v:clinicReports.length,u:"件",i:"🚨"},{l:"夜間対応",v:f.nightService?"対応":"未対応",u:"",i:"🌙"}].map(({l,v,u,i})=>(
         <div key={l} style={{background:C.white,borderRadius:14,padding:14,border:`1px solid ${C.border}`}}>
           <div style={{fontSize:18,marginBottom:4}}>{i}</div>
           <div style={{fontSize:11,color:C.textM,marginBottom:2}}>{l}</div>
@@ -992,6 +1011,40 @@ function ClinicDash({ user, clinicProfile, clinicBookings, onSaveClinicProfile, 
         {saved && <span style={{fontSize:12,color:C.green,fontWeight:700}}>保存しました</span>}
       </div>
     </div>
+    <div style={{background:C.white,borderRadius:16,padding:14,border:`1px solid ${C.border}`}}>
+      <div style={{fontWeight:800,fontSize:13,color:C.text,marginBottom:10}}>口コミ通報キュー</div>
+      {clinicReports.length===0 ? <div style={{fontSize:12,color:C.textM}}>現在、通報はありません</div> : clinicReports.slice(0, 8).map((r)=>(
+        <div key={r.id} style={{padding:"10px 0",borderBottom:`1px solid ${C.grayL}`}}>
+          <div style={{fontSize:12,fontWeight:700,color:C.text,marginBottom:2}}>理由: {r.reason}</div>
+          <div style={{fontSize:11,color:C.textM}}>reviewId: {r.reviewId} / {new Date(r.createdAt).toLocaleString()}</div>
+        </div>
+      ))}
+    </div>
+  </div>;
+}
+
+function LegalPage({ type, onBack }) {
+  const title = type === "terms" ? "利用規約" : "プライバシーポリシー";
+  return <div style={{background:C.white,borderRadius:16,padding:16,border:`1px solid ${C.border}`}}>
+    <button onClick={onBack} style={{background:"#f8fafc",border:`1px solid ${C.border}`,borderRadius:99,padding:"6px 12px",fontSize:11,cursor:"pointer",marginBottom:12,...ff}}>← 戻る</button>
+    <h2 style={{margin:"0 0 10px",fontSize:18,color:C.text}}>{title}</h2>
+    {type === "terms" ? (
+      <div style={{fontSize:12,color:C.textS,lineHeight:1.8}}>
+        <p>本サービスは医療情報提供プラットフォームです。診断・治療行為を提供するものではありません。</p>
+        <p>ユーザーは正確な情報を登録し、第三者の権利を侵害する投稿を行ってはいけません。</p>
+        <p>口コミ投稿は運営のガイドラインに基づき、非公開・削除・編集されることがあります。</p>
+        <p>予約機能は医療機関側の都合により変更・取消される場合があります。</p>
+        <p>本サービスの停止・障害・第三者行為により発生した損害について、当社の故意または重過失を除き責任を負いません。</p>
+      </div>
+    ) : (
+      <div style={{fontSize:12,color:C.textS,lineHeight:1.8}}>
+        <p>当社は、会員登録情報、予約情報、投稿情報、アクセスログをサービス提供・改善・不正対策のために利用します。</p>
+        <p>取得した個人情報は、法令に基づく場合を除き、本人同意なく第三者提供しません。</p>
+        <p>予約の履行に必要な範囲で、医療機関に氏名・連絡先・予約内容を提供します。</p>
+        <p>ユーザーは、法令に基づき、自己情報の開示・訂正・削除を請求できます。</p>
+        <p>お問い合わせ: support@example.com</p>
+      </div>
+    )}
   </div>;
 }
 
@@ -1002,6 +1055,7 @@ export default function App() {
   const [users, setUsers] = useState(() => readJSON(STORAGE_KEYS.users, []));
   const [bookings, setBookings] = useState(() => readJSON(STORAGE_KEYS.bookings, []));
   const [clinicProfiles, setClinicProfiles] = useState(() => readJSON(STORAGE_KEYS.clinicProfiles, []));
+  const [reviewReports, setReviewReports] = useState(() => readJSON(STORAGE_KEYS.reviewReports, []));
   const [mode, setMode] = useState("patient");
   const [view, setView] = useState("home");
   const [search, setSearch] = useState("");
@@ -1013,6 +1067,7 @@ export default function App() {
   const [docModal, setDocModal] = useState(null);
   const [showAuth, setShowAuth] = useState(false);
   const [showNotif, setShowNotif] = useState(false);
+  const [legalPage, setLegalPage] = useState(null);
   const [showMap, setShowMap] = useState(false);
   const [showSymptoms, setShowSymptoms] = useState(false);
   const [user, setUser] = useState(null);
@@ -1024,8 +1079,67 @@ export default function App() {
   const allHospitals = [...hospitals, ...clinicProfiles.map(toHospitalFromProfile)];
   const clinicProfile = user?.role === "clinic" ? clinicProfiles.find((p) => p.ownerUserId === user.id) : null;
   const clinicBookings = clinicProfile ? bookings.filter((b) => b.hospitalId === clinicProfile.id) : [];
+  const clinicReports = clinicProfile ? reviewReports.filter((r) => r.clinicId === String(clinicProfile.id)) : [];
 
   useEffect(()=>{setTimeout(()=>setMounted(true),80);},[]);
+  useEffect(() => {
+    if (!isSupabaseEnabled) return;
+    (async () => {
+      const userFromSession = await getSessionUser();
+      if (!userFromSession) return;
+      const { data: profile } = await getProfileById(userFromSession.id);
+      if (!profile) return;
+      setUser({
+        id: profile.id,
+        name: profile.display_name,
+        email: profile.email,
+        role: profile.role,
+        photo: profile.avatar,
+      });
+      const { data: cloudClinics } = await listClinicProfiles();
+      if (cloudClinics) {
+        const normalized = cloudClinics.map((c) => ({
+          id: c.id,
+          ownerUserId: c.owner_user_id,
+          name: c.name,
+          short: c.short || "",
+          address: c.address,
+          tel: c.tel || "",
+          hours: c.hours || "",
+          access: c.access || "",
+          desc: c.desc || "",
+          lat: c.lat,
+          lng: c.lng,
+          beds: c.beds,
+          founded: c.founded,
+          depts: c.depts || [],
+          parking: c.parking,
+          nightService: c.night_service,
+          female: c.female,
+          online: c.online,
+        }));
+        setClinicProfiles(normalized);
+      }
+      const { data: cloudBookings } = await listBookings();
+      if (cloudBookings) {
+        const normalized = cloudBookings.map((b) => ({
+          id: b.id,
+          userId: b.user_id,
+          hospitalId: b.clinic_id,
+          hospitalName: allHospitals.find((h) => h.id === b.clinic_id)?.name || "医療機関",
+          type: b.booking_type,
+          date: b.date,
+          time: b.time,
+          dept: b.dept,
+          status: b.status,
+          concern: b.concern || "",
+          createdAt: b.created_at,
+        }));
+        setBookings(normalized);
+      }
+    })();
+  }, []);
+
   useEffect(() => {
     const session = readJSON(STORAGE_KEYS.session, null);
     if (!session?.userId) return;
@@ -1058,14 +1172,53 @@ export default function App() {
   const notifCount = Math.min(userBookings.length, 9);
 
   const saveSession = (uid) => writeJSON(STORAGE_KEYS.session, { userId: uid });
-  const clearSession = () => localStorage.removeItem(STORAGE_KEYS.session);
+  const clearSession = async () => {
+    localStorage.removeItem(STORAGE_KEYS.session);
+    if (isSupabaseEnabled) {
+      await signOutSession();
+    }
+  };
   const toClientUser = (u) => ({ id: u.id, name: u.name, email: u.email, role: u.role, photo: u.photo });
+  const logAction = async (action, metadata = {}) => {
+    const entry = {
+      id: createId("log"),
+      actorUserId: user?.id || null,
+      action,
+      metadata,
+      createdAt: new Date().toISOString(),
+    };
+    const next = [entry, ...readJSON(STORAGE_KEYS.auditLogs, [])].slice(0, 1000);
+    writeJSON(STORAGE_KEYS.auditLogs, next);
+    if (isSupabaseEnabled && user?.id) {
+      await insertAuditLog({
+        actor_user_id: user.id,
+        action,
+        metadata,
+      });
+    }
+  };
 
-  const signup = ({ name, email, pass, role }) => {
+  const signup = async ({ name, email, pass, role }) => {
     if (!name.trim()) return { ok: false, error: "お名前を入力してください" };
     if (!email.includes("@")) return { ok: false, error: "正しいメールアドレスを入力してください" };
     if (pass.length < 6) return { ok: false, error: "パスワードは6文字以上にしてください" };
-    if (users.some((u) => u.email.toLowerCase() === email.toLowerCase())) return { ok: false, error: "このメールアドレスは既に登録済みです" };
+    if (!isSupabaseEnabled && users.some((u) => u.email.toLowerCase() === email.toLowerCase())) return { ok: false, error: "このメールアドレスは既に登録済みです" };
+    if (isSupabaseEnabled) {
+      const { data, error } = await signUpWithEmail({ email: email.toLowerCase(), pass });
+      if (error) return { ok: false, error: error.message };
+      const uid = data.user?.id;
+      if (!uid) return { ok: false, error: "ユーザー作成に失敗しました" };
+      await upsertProfile({
+        id: uid,
+        email: email.toLowerCase(),
+        display_name: name.trim(),
+        role,
+        avatar: role === "clinic" ? "🏥" : "👤",
+      });
+      setUser({ id: uid, name: name.trim(), email: email.toLowerCase(), role, photo: role === "clinic" ? "🏥" : "👤" });
+      await logAction("signup", { role });
+      return { ok: true };
+    }
     const created = {
       id: createId("u"),
       name: name.trim(),
@@ -1080,24 +1233,41 @@ export default function App() {
     writeJSON(STORAGE_KEYS.users, nextUsers);
     saveSession(created.id);
     setUser(toClientUser(created));
+    await logAction("signup", { role });
     return { ok: true };
   };
 
-  const login = ({ email, pass }) => {
+  const login = async ({ email, pass }) => {
+    if (isSupabaseEnabled) {
+      const { data, error } = await signInWithEmail({ email: email.toLowerCase(), pass });
+      if (error) return { ok: false, error: "メールアドレスまたはパスワードが違います" };
+      const uid = data.user?.id;
+      if (!uid) return { ok: false, error: "ログインに失敗しました" };
+      const { data: profile } = await getProfileById(uid);
+      if (!profile) return { ok: false, error: "プロフィールが見つかりません" };
+      setUser({ id: profile.id, name: profile.display_name, email: profile.email, role: profile.role, photo: profile.avatar });
+      await logAction("login", {});
+      return { ok: true };
+    }
     const target = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
     if (!target) return { ok: false, error: "ユーザーが見つかりません" };
     if (target.passHash !== passHash(pass)) return { ok: false, error: "メールアドレスまたはパスワードが違います" };
     saveSession(target.id);
     setUser(toClientUser(target));
+    await logAction("login", {});
     return { ok: true };
   };
 
-  const socialLogin = ({ provider, name, email, role }) => {
+  const socialLogin = async ({ provider, name, email, role }) => {
     const normalizedEmail = (email || `${provider}-${Date.now()}@example.com`).toLowerCase();
+    if (isSupabaseEnabled) {
+      return { ok: false, error: "本番OAuth設定が必要です。いまはメールログインを使ってください。" };
+    }
     const existing = users.find((u) => u.email === normalizedEmail);
     if (existing) {
       saveSession(existing.id);
       setUser(toClientUser(existing));
+      await logAction("login_social_local", { provider });
       return { ok: true };
     }
     const created = {
@@ -1114,11 +1284,45 @@ export default function App() {
     writeJSON(STORAGE_KEYS.users, nextUsers);
     saveSession(created.id);
     setUser(toClientUser(created));
+    await logAction("signup_social_local", { provider, role });
     return { ok: true };
   };
 
-  const createBooking = (payload) => {
+  const createBooking = async (payload) => {
     if (!user) return;
+    if (isSupabaseEnabled) {
+      const { error } = await insertBooking({
+        user_id: user.id,
+        clinic_id: payload.hospitalId,
+        booking_type: payload.type,
+        date: payload.date,
+        time: payload.time,
+        dept: payload.dept,
+        status: payload.status,
+        concern: payload.concern || "",
+      });
+      if (!error) {
+        const { data: cloudBookings } = await listBookings();
+        if (cloudBookings) {
+          const normalized = cloudBookings.map((b) => ({
+            id: b.id,
+            userId: b.user_id,
+            hospitalId: b.clinic_id,
+            hospitalName: allHospitals.find((h) => h.id === b.clinic_id)?.name || payload.hospitalName || "医療機関",
+            type: b.booking_type,
+            date: b.date,
+            time: b.time,
+            dept: b.dept,
+            status: b.status,
+            concern: b.concern || "",
+            createdAt: b.created_at,
+          }));
+          setBookings(normalized);
+        }
+        await logAction("booking_create", { hospitalId: payload.hospitalId, type: payload.type });
+      }
+      return;
+    }
     const nextBooking = {
       id: createId("bk"),
       userId: user.id,
@@ -1128,6 +1332,38 @@ export default function App() {
     const next = [nextBooking, ...bookings];
     setBookings(next);
     writeJSON(STORAGE_KEYS.bookings, next);
+    await logAction("booking_create", { hospitalId: payload.hospitalId, type: payload.type });
+  };
+
+  const reportReview = async (review, hospital) => {
+    if (!user) {
+      alert("通報にはログインが必要です");
+      setShowAuth(true);
+      return;
+    }
+    const reason = window.prompt("通報理由を入力してください（例: 誹謗中傷・個人情報）");
+    if (!reason?.trim()) return;
+    const report = {
+      id: createId("rp"),
+      reviewId: String(review.id),
+      reporterUserId: user.id,
+      clinicId: String(hospital.id),
+      reason: reason.trim(),
+      createdAt: new Date().toISOString(),
+    };
+    const next = [report, ...reviewReports];
+    setReviewReports(next);
+    writeJSON(STORAGE_KEYS.reviewReports, next);
+    if (isSupabaseEnabled) {
+      await insertReviewReport({
+        review_id: report.reviewId,
+        reporter_user_id: report.reporterUserId,
+        clinic_id: report.clinicId,
+        reason: report.reason,
+      });
+    }
+    await logAction("review_report", { reviewId: report.reviewId, clinicId: report.clinicId });
+    alert("通報を受け付けました。運営側で確認します。");
   };
 
   const requestLocation = () => {
@@ -1145,7 +1381,7 @@ export default function App() {
     );
   };
 
-  const saveClinicProfile = (payload) => {
+  const saveClinicProfile = async (payload) => {
     if (!user || user.role !== "clinic") return;
     const prev = clinicProfiles.find((p) => p.ownerUserId === user.id);
     const nextProfile = {
@@ -1159,6 +1395,29 @@ export default function App() {
       : [...clinicProfiles, nextProfile];
     setClinicProfiles(nextProfiles);
     writeJSON(STORAGE_KEYS.clinicProfiles, nextProfiles);
+    if (isSupabaseEnabled) {
+      await upsertClinic({
+        id: nextProfile.id,
+        owner_user_id: user.id,
+        name: nextProfile.name,
+        short: nextProfile.short || "",
+        address: nextProfile.address,
+        tel: nextProfile.tel || "",
+        hours: nextProfile.hours || "",
+        access: nextProfile.access || "",
+        desc: nextProfile.desc || "",
+        lat: Number(nextProfile.lat),
+        lng: Number(nextProfile.lng),
+        beds: Number(nextProfile.beds || 0),
+        founded: Number(nextProfile.founded || new Date().getFullYear()),
+        depts: nextProfile.depts?.length ? nextProfile.depts : ["内科"],
+        parking: !!nextProfile.parking,
+        night_service: !!nextProfile.nightService,
+        female: !!nextProfile.female,
+        online: !!nextProfile.online,
+      });
+    }
+    await logAction("clinic_profile_upsert", { clinicId: nextProfile.id });
   };
 
   const filtered = allHospitals
@@ -1188,7 +1447,7 @@ export default function App() {
       <div style={{background:isClinic?GB:G,transition:"background .4s",position:"sticky",top:0,zIndex:500}}>
         <div style={{maxWidth:680,margin:"0 auto",padding:"12px 16px 0"}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-            <button onClick={()=>{setView("home");setSelected(null);}} style={{display:"flex",alignItems:"center",gap:7,background:"none",border:"none",cursor:"pointer",...ff}}>
+            <button onClick={()=>{setView("home");setSelected(null);setLegalPage(null);}} style={{display:"flex",alignItems:"center",gap:7,background:"none",border:"none",cursor:"pointer",...ff}}>
               <span style={{fontSize:18}}>🏥</span>
               <span style={{fontSize:17,fontWeight:900,color:C.white,letterSpacing:"-0.5px"}}>ドクターレビュー</span>
             </button>
@@ -1246,12 +1505,14 @@ export default function App() {
 
       {/* BODY */}
       <div style={{maxWidth:680,margin:"0 auto",padding:"16px 16px 80px"}}>
-        {view==="mypage"&&user ? (
-          <MyPage user={user} favs={favs} bookings={userBookings} onUnfav={id=>setFavs(p=>p.filter(f=>f.id!==id))} onLogout={()=>{clearSession();setUser(null);setView("home");}} onHospitalClick={openHospital}/>
+        {legalPage ? (
+          <LegalPage type={legalPage} onBack={()=>setLegalPage(null)} />
+        ) : view==="mypage"&&user ? (
+          <MyPage user={user} favs={favs} bookings={userBookings} onUnfav={id=>setFavs(p=>p.filter(f=>f.id!==id))} onLogout={async ()=>{await logAction("logout", {});await clearSession();setUser(null);setView("home");}} onHospitalClick={openHospital}/>
         ) : isClinic ? (
-          <ClinicDash user={user} clinicProfile={clinicProfile} clinicBookings={clinicBookings} onSaveClinicProfile={saveClinicProfile} onDoctorClick={setDocModal}/>
+          <ClinicDash user={user} clinicProfile={clinicProfile} clinicBookings={clinicBookings} clinicReports={clinicReports} onSaveClinicProfile={saveClinicProfile} onDoctorClick={setDocModal}/>
         ) : view==="detail"&&selected ? (
-          <HospitalDetail hospital={selected} onBack={()=>{setSelected(null);setView("home");}} onDoctorClick={setDocModal} isFav={isFav(selected)} onFavToggle={toggleFav} user={user} onCreateBooking={createBooking} onRequireLogin={()=>setShowAuth(true)}/>
+          <HospitalDetail hospital={selected} onBack={()=>{setSelected(null);setView("home");}} onDoctorClick={setDocModal} isFav={isFav(selected)} onFavToggle={toggleFav} user={user} onCreateBooking={createBooking} onRequireLogin={()=>setShowAuth(true)} onReportReview={reportReview}/>
         ) : (
           <div>
             {/* Map */}
@@ -1281,6 +1542,10 @@ export default function App() {
                 <div style={{fontSize:12,color:C.textM,marginTop:6}}>条件を変えて検索してみてください</div>
               </div>}
             </div>
+            <div style={{display:"flex",justifyContent:"center",gap:14,marginTop:18,fontSize:11}}>
+              <button onClick={()=>setLegalPage("terms")} style={{background:"none",border:"none",color:C.blue,cursor:"pointer",textDecoration:"underline",...ff}}>利用規約</button>
+              <button onClick={()=>setLegalPage("privacy")} style={{background:"none",border:"none",color:C.blue,cursor:"pointer",textDecoration:"underline",...ff}}>プライバシーポリシー</button>
+            </div>
           </div>
         )}
       </div>
@@ -1295,6 +1560,7 @@ export default function App() {
           {v:"mypage",i:user?"👤":"🔑",l:user?"マイページ":"ログイン"},
         ].map(({v,i,l})=>(
           <button key={v} onClick={()=>{
+            setLegalPage(null);
             if(v==="home"){setView("home");setSelected(null);}
             else if(v==="symptoms"){setView("home");setSelected(null);setShowSymptoms(true);setShowMap(false);window.scrollTo(0,0);}
             else if(v==="map"){setView("home");setSelected(null);setShowMap(true);setShowSymptoms(false);window.scrollTo(0,0);}

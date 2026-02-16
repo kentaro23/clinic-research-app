@@ -1,61 +1,47 @@
-# 🏥 ドクターレビュー - Clinic Research App
+# Clinic Research App
 
-病院・クリニックの口コミ・評判を検索できる医療機関レビューサービス。
+医療機関口コミ・予約サービスの Web アプリです。  
+患者向けと医療機関向けの画面を1つのフロントで提供します。
 
-## ✨ 機能
+## 機能
+- メールログイン / 新規登録（Supabase有効時は本番認証）
+- 医療機関会員による自院情報登録・更新
+- 患者向け検索、地図表示、予約作成
+- 現在地取得（ブラウザ Geolocation API）
+- 口コミ通報（モデレーションキュー）
+- 監査ログ保存（主要アクション）
+- 利用規約 / プライバシーポリシー画面
 
-### 患者向け
-- 🔍 病院名・診療科・地域からの検索
-- 🩺 症状から診療科・病院を自動マッチング
-- 🗺️ SVGマップで周辺の医療機関を表示
-- ❤️ お気に入り登録（ログイン必要）
-- 📅 ネット予約
-- 💻 オンライン診療予約
-- ✏️ 口コミ投稿（3ステップ・多軸評価）
-- 👨‍⚕️ 医師プロフィール詳細
-- 🔔 通知センター（予約リマインダー等）
-- 🔐 認証（Google / Apple / メール）
-- 👤 マイページ（お気に入り・投稿履歴・予約履歴）
-
-### 医療機関向け
-- 📊 管理ダッシュボード（KPI・評価分布）
-- 💬 口コミへの返信機能
-- 👥 医師一覧管理
-- ✅ 認証済みバッジ
-
-## 🚀 ローカル開発
-
+## ローカル実行
 ```bash
 npm install
 npm run dev
 ```
 
-## 🏗️ ビルド & デプロイ
+## Supabase 本番設定
+1. Supabase プロジェクトを作成
+2. SQL Editor で `supabase/schema.sql` を実行
+3. `.env` を作成して以下を設定
 
 ```bash
-npm run build
+VITE_SUPABASE_URL=YOUR_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
 ```
 
-Vercelへの自動デプロイ設定済み（`vercel.json`）。
-
-## 🛠️ 技術スタック
-
-- **フロントエンド**: React 18 + Vite
-- **スタイリング**: CSS-in-JS（インラインスタイル）
-- **デプロイ**: Vercel
-- **バージョン管理**: GitHub
-
-## 📁 プロジェクト構成
-
+4. 再起動
+```bash
+npm run dev
 ```
-clinic-research-app/
-├── public/
-│   └── favicon.svg
-├── src/
-│   ├── main.jsx      # エントリーポイント
-│   └── App.jsx       # メインアプリ
-├── index.html
-├── vite.config.js
-├── vercel.json       # Vercel設定
-└── package.json
-```
+
+`VITE_SUPABASE_*` が未設定の場合はローカル保存モードで動作します。
+
+## Vercel デプロイ
+Vercel の Project Settings > Environment Variables に以下を登録:
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+
+その後 `main` へ push すると自動デプロイされます。
+
+## 注意
+- 予約・医療機関情報は Supabase 接続時に複数端末で共有されます。
+- 口コミデータ本体は現状サンプル表示中心で、通報は本番DBへ保存されます。
