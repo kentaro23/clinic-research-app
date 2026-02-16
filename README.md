@@ -22,6 +22,7 @@ npm run dev
 1. Supabase プロジェクトを作成
 2. SQL Editor で `supabase/schema.sql` を実行
   - 既存テーブルがある場合も、同ファイルを再実行して移行します
+  - 医師登録機能を使うため `clinic_doctors` テーブルも同時に作成されます
 3. `.env` を作成して以下を設定
 
 ```bash

@@ -654,7 +654,7 @@ function ReviewCard({ review, onDoctorClick, clinicView=false, onReport, onHelpf
 /* ═══════════════════════════════════════════
    HOSPITAL CARD
 ═══════════════════════════════════════════ */
-function HospitalCard({ h, onClick, isFav, onFavToggle, user }) {
+function HospitalCard({ h, onClick, isFav, onFavToggle, user, compareActive, onToggleCompare }) {
   const [hov, setHov] = useState(false);
   return <div onClick={()=>onClick(h)} onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
     style={{background:C.white,borderRadius:18,border:`1px solid ${C.border}`,padding:16,cursor:"pointer",transition:"all .25s",boxShadow:hov?"0 8px 28px rgba(16,185,129,.14)":"0 2px 10px rgba(0,0,0,.05)",transform:hov?"translateY(-2px)":"none"}}>
@@ -685,6 +685,9 @@ function HospitalCard({ h, onClick, isFav, onFavToggle, user }) {
       {h.female&&<span>👩‍⚕️ 女性医師</span>}
       {h.online&&<span>💻 オンライン</span>}
       {h.today&&<Badge green>本日診療</Badge>}
+      <button onClick={(e)=>{e.stopPropagation();onToggleCompare?.(h);}} style={{marginLeft:"auto",padding:"4px 9px",borderRadius:99,border:`1px solid ${compareActive?C.green:C.border}`,background:compareActive?C.greenLL:C.white,color:compareActive?C.greenD:C.text,fontSize:10,fontWeight:700,cursor:"pointer",...ff}}>
+        {compareActive?"比較中":"比較する"}
+      </button>
     </div>
   </div>;
 }
@@ -818,6 +821,8 @@ function HospitalDetail({ hospital, doctorsData, onBack, onDoctorClick, isFav, o
 ═══════════════════════════════════════════ */
 function DoctorProfile({ doc, hospitalsData }) {
   const reviews = hospitalsData.flatMap(h=>h.reviews.filter(r=>r.did===doc.id));
+  const certs = doc.certs || [];
+  const specialties = doc.specialties || [];
   return <div>
     <div style={{display:"flex",gap:14,marginBottom:18,padding:14,background:C.greenLL,borderRadius:14,border:`1px solid ${C.greenL}`}}>
       <Av emoji={doc.photo} size={60} bg="linear-gradient(135deg,#6ee7b7,#34d399)"/>
@@ -828,17 +833,17 @@ function DoctorProfile({ doc, hospitalsData }) {
       </div>
     </div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
-      {[{l:"経験年数",v:`${doc.exp}年`},{l:"出身大学",v:doc.edu}].map(({l,v})=>(
+      {[{l:"経験年数",v:`${doc.exp ?? 0}年`},{l:"出身大学",v:doc.edu || "登録なし"}].map(({l,v})=>(
         <div key={l} style={{padding:"10px 12px",background:"#f9fafb",borderRadius:10}}><div style={{fontSize:10,color:C.textM,marginBottom:3}}>{l}</div><div style={{fontSize:12,fontWeight:700,color:"#374151"}}>{v}</div></div>
       ))}
     </div>
     <div style={{marginBottom:12}}>
       <div style={{fontSize:12,fontWeight:700,color:"#374151",marginBottom:6}}>専門分野</div>
-      <div style={{display:"flex",flexWrap:"wrap",gap:5}}>{doc.specialties.map(s=><Chip key={s} active blue sm>{s}</Chip>)}</div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:5}}>{specialties.length?specialties.map(s=><Chip key={s} active blue sm>{s}</Chip>):<span style={{fontSize:12,color:C.textM}}>登録なし</span>}</div>
     </div>
     <div style={{marginBottom:12}}>
       <div style={{fontSize:12,fontWeight:700,color:"#374151",marginBottom:5}}>資格・認定</div>
-      {doc.certs.map(c=><div key={c} style={{fontSize:12,color:"#374151",padding:"2px 0",display:"flex",gap:6}}><span style={{color:C.green}}>✓</span>{c}</div>)}
+      {certs.length?certs.map(c=><div key={c} style={{fontSize:12,color:"#374151",padding:"2px 0",display:"flex",gap:6}}><span style={{color:C.green}}>✓</span>{c}</div>):<div style={{fontSize:12,color:C.textM}}>登録なし</div>}
     </div>
     <div style={{padding:12,background:"#f9fafb",borderRadius:12,marginBottom:reviews.length>0?16:0}}>
       <div style={{fontSize:12,fontWeight:700,color:"#374151",marginBottom:5}}>ひとこと</div>
@@ -1146,6 +1151,28 @@ function LegalPage({ type, onBack }) {
   </div>;
 }
 
+function ComparePanel({ items, onRemove, onOpen }) {
+  if (items.length === 0) return null;
+  return <div style={{background:C.white,borderRadius:16,padding:14,border:`2px solid ${C.blueL}`,marginBottom:14}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+      <div style={{fontSize:13,fontWeight:800,color:C.text}}>🏥 病院比較 ({items.length}/3)</div>
+      <span style={{fontSize:11,color:C.textM}}>気になる病院を横比較</span>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:`repeat(${items.length}, minmax(0,1fr))`,gap:8}}>
+      {items.map((h)=><div key={h.id} style={{border:`1px solid ${C.border}`,borderRadius:12,padding:10}}>
+        <div style={{fontSize:12,fontWeight:700,color:C.text,marginBottom:6,lineHeight:1.4}}>{h.name}</div>
+        <div style={{fontSize:11,color:C.textS,marginBottom:4}}>⭐ {h.rating} / 口コミ {h.cnt}件</div>
+        <div style={{fontSize:11,color:C.textS,marginBottom:4}}>⏱ {h.wait}</div>
+        <div style={{fontSize:11,color:C.textS,marginBottom:8}}>{h.online?"💻 オンライン可":"🏥 来院のみ"}</div>
+        <div style={{display:"flex",gap:6}}>
+          <Btn sm onClick={()=>onOpen(h)}>詳細</Btn>
+          <Btn sm variant="outline" onClick={()=>onRemove(h.id)}>外す</Btn>
+        </div>
+      </div>)}
+    </div>
+  </div>;
+}
+
 /* ═══════════════════════════════════════════
    MAIN APP
 ═══════════════════════════════════════════ */
@@ -1170,6 +1197,7 @@ export default function App() {
   const [legalPage, setLegalPage] = useState(null);
   const [showMap, setShowMap] = useState(false);
   const [showSymptoms, setShowSymptoms] = useState(false);
+  const [compareIds, setCompareIds] = useState([]);
   const [user, setUser] = useState(null);
   const [favs, setFavs] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
@@ -1324,6 +1352,11 @@ export default function App() {
   const toggleF = k=>setActiveF(p=>p.includes(k)?p.filter(x=>x!==k):[...p,k]);
   const toggleFav = h=>setFavs(p=>p.find(f=>f.id===h.id)?p.filter(f=>f.id!==h.id):[...p,h]);
   const isFav = h=>!!favs.find(f=>f.id===h.id);
+  const toggleCompare = (h) => setCompareIds((p) => {
+    if (p.includes(h.id)) return p.filter((id) => id !== h.id);
+    if (p.length >= 3) return p;
+    return [...p, h.id];
+  });
   const userBookings = user ? bookings.filter((b) => b.userId === user.id) : [];
   const notifCount = Math.min(userBookings.length, 9);
 
@@ -1765,6 +1798,7 @@ export default function App() {
     .sort((a,b)=>sort==="rating"?b.rating-a.rating:b.cnt-a.cnt);
 
   const openHospital = h=>{ setSelected(h); setView("detail"); };
+  const compareItems = allHospitals.filter((h) => compareIds.includes(h.id));
 
   return (
     <div style={{...ff,minHeight:"100vh",background:"#f1f5f9"}}>
@@ -1851,6 +1885,7 @@ export default function App() {
           <div>
             {/* Map */}
             {showMap&&<MapView hospitals={filtered} onSelect={openHospital} userLocation={userLocation} onLocate={requestLocation} locationError={locationError}/>}
+            <ComparePanel items={compareItems} onRemove={(id)=>setCompareIds((p)=>p.filter((x)=>x!==id))} onOpen={openHospital}/>
 
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
               <div>
@@ -1867,7 +1902,7 @@ export default function App() {
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
               {filtered.map((h,i)=>(
                 <div key={h.id} style={{opacity:mounted?1:0,transform:mounted?"none":"translateY(14px)",transition:`all .4s ease ${i*.07}s`}}>
-                  <HospitalCard h={h} onClick={openHospital} isFav={isFav(h)} onFavToggle={toggleFav} user={user}/>
+                  <HospitalCard h={h} onClick={openHospital} isFav={isFav(h)} onFavToggle={toggleFav} user={user} compareActive={compareIds.includes(h.id)} onToggleCompare={toggleCompare}/>
                 </div>
               ))}
               {filtered.length===0&&<div style={{textAlign:"center",padding:"48px 0"}}>
