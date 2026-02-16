@@ -40,6 +40,14 @@ export const upsertClinic = async (clinic) => {
   return supabase.from("clinics").upsert(clinic).select().single();
 };
 
+export const listClinicDoctors = async () => {
+  return supabase.from("clinic_doctors").select("*").order("created_at", { ascending: false });
+};
+
+export const upsertClinicDoctor = async (doctor) => {
+  return supabase.from("clinic_doctors").upsert(doctor).select().single();
+};
+
 export const listBookings = async () => {
   return supabase.from("bookings").select("*").order("created_at", { ascending: false });
 };

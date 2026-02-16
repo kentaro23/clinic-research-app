@@ -83,6 +83,23 @@ create table if not exists public.reviews (
   created_at timestamptz not null default now()
 );
 
+-- Clinic doctors
+create table if not exists public.clinic_doctors (
+  id uuid primary key default gen_random_uuid(),
+  clinic_id text not null,
+  owner_user_id uuid not null references public.profiles(id) on delete cascade,
+  name text not null,
+  title text not null,
+  dept text not null,
+  exp integer not null default 0,
+  specialties text[] not null default array[]::text[],
+  bio text not null default '',
+  photo text not null default '🧑‍⚕️',
+  female boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 -- Review reports (moderation)
 create table if not exists public.review_reports (
   id uuid primary key default gen_random_uuid(),
@@ -119,11 +136,16 @@ drop trigger if exists trg_clinics_touch on public.clinics;
 create trigger trg_clinics_touch before update on public.clinics
 for each row execute function public.touch_updated_at();
 
+drop trigger if exists trg_clinic_doctors_touch on public.clinic_doctors;
+create trigger trg_clinic_doctors_touch before update on public.clinic_doctors
+for each row execute function public.touch_updated_at();
+
 -- RLS
 alter table public.profiles enable row level security;
 alter table public.clinics enable row level security;
 alter table public.bookings enable row level security;
 alter table public.reviews enable row level security;
+alter table public.clinic_doctors enable row level security;
 alter table public.review_reports enable row level security;
 alter table public.audit_logs enable row level security;
 
@@ -168,6 +190,15 @@ for select using (true);
 drop policy if exists "reviews_insert_self" on public.reviews;
 create policy "reviews_insert_self" on public.reviews
 for insert with check (auth.uid() = user_id);
+
+-- Clinic doctors policies
+drop policy if exists "clinic_doctors_public_read" on public.clinic_doctors;
+create policy "clinic_doctors_public_read" on public.clinic_doctors
+for select using (true);
+
+drop policy if exists "clinic_doctors_owner_write" on public.clinic_doctors;
+create policy "clinic_doctors_owner_write" on public.clinic_doctors
+for all using (auth.uid() = owner_user_id) with check (auth.uid() = owner_user_id);
 
 -- Review reports policies
 drop policy if exists "reports_insert_self" on public.review_reports;

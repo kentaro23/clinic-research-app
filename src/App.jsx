@@ -9,11 +9,13 @@ import {
   insertReviewReport,
   listBookings,
   listClinicProfiles,
+  listClinicDoctors,
   listReviews,
   signInWithEmail,
   signOutSession,
   signUpWithEmail,
   updateReview,
+  upsertClinicDoctor,
   upsertClinic,
   upsertProfile,
 } from "./lib/supabaseApi";
@@ -27,6 +29,7 @@ const STORAGE_KEYS = {
   reviewReports: "clinic_app_review_reports_v1",
   auditLogs: "clinic_app_audit_logs_v1",
   reviews: "clinic_app_reviews_v1",
+  clinicDoctors: "clinic_app_clinic_doctors_v1",
 };
 
 const readJSON = (key, fallback) => {
@@ -524,14 +527,14 @@ function NotifPanel({ bookings = [] }) {
 /* ═══════════════════════════════════════════
    REVIEW FORM
 ═══════════════════════════════════════════ */
-function ReviewForm({ hospital, user, onClose, onSubmit }) {
+function ReviewForm({ hospital, user, onClose, onSubmit, doctorsData }) {
   const [step, setStep] = useState(1);
   const [f, setF] = useState({dept:"",did:null,overall:0,dr:0,fr:0,wr:0,title:"",body:"",tags:[],anon:!user});
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const set = (k,v)=>setF(p=>({...p,[k]:v}));
   const toggleTag = t=>set("tags",f.tags.includes(t)?f.tags.filter(x=>x!==t):[...f.tags,t]);
-  const deptDocs = doctors.filter(d=>d.hid===hospital.id&&(!f.dept||d.dept===f.dept));
+  const deptDocs = doctorsData.filter(d=>String(d.hid)===String(hospital.id)&&(!f.dept||d.dept===f.dept));
   const submitReview = async () => {
     if (!f.dept || !f.overall || !f.title.trim() || !f.body.trim()) return;
     setSubmitting(true);
@@ -592,7 +595,7 @@ function ReviewForm({ hospital, user, onClose, onSubmit }) {
 /* ═══════════════════════════════════════════
    REVIEW CARD
 ═══════════════════════════════════════════ */
-function ReviewCard({ review, onDoctorClick, clinicView=false, onReport, onHelpful, onReply }) {
+function ReviewCard({ review, onDoctorClick, clinicView=false, onReport, onHelpful, onReply, doctorsData }) {
   const [helpful, setHelpful] = useState(review.helpful);
   const [voted, setVoted] = useState(false);
   const [showReplyBox, setShowReplyBox] = useState(false);
@@ -603,7 +606,7 @@ function ReviewCard({ review, onDoctorClick, clinicView=false, onReport, onHelpf
     setReplyText(review.reply || "");
     setReplySaved(!!review.reply);
   }, [review.helpful, review.reply]);
-  const doc = doctors.find(d=>d.id===review.did);
+  const doc = doctorsData.find(d=>String(d.id)===String(review.did));
   return <div style={{background:C.white,borderRadius:16,padding:16,border:`1px solid ${C.border}`,boxShadow:"0 2px 8px rgba(0,0,0,.04)"}}>
     <div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}>
       <div style={{display:"flex",gap:10,alignItems:"center"}}>
@@ -689,11 +692,11 @@ function HospitalCard({ h, onClick, isFav, onFavToggle, user }) {
 /* ═══════════════════════════════════════════
    HOSPITAL DETAIL
 ═══════════════════════════════════════════ */
-function HospitalDetail({ hospital, onBack, onDoctorClick, isFav, onFavToggle, user, onCreateBooking, onRequireLogin, onReportReview, onCreateReview, onReviewHelpful, onReviewReply }) {
+function HospitalDetail({ hospital, doctorsData, onBack, onDoctorClick, isFav, onFavToggle, user, onCreateBooking, onRequireLogin, onReportReview, onCreateReview, onReviewHelpful, onReviewReply }) {
   const [tab, setTab] = useState("reviews");
   const [showForm, setShowForm] = useState(false);
   const [modal, setModal] = useState(null); // "book" | "online"
-  const hospDocs = doctors.filter(d=>d.hid===hospital.id);
+  const hospDocs = doctorsData.filter(d=>String(d.hid)===String(hospital.id));
   const avg = k=>hospital.reviews.length ? hospital.reviews.reduce((a,r)=>a+r[k],0)/hospital.reviews.length : 0;
 
   return <div>
@@ -750,14 +753,14 @@ function HospitalDetail({ hospital, onBack, onDoctorClick, isFav, onFavToggle, u
       </div>
       {showForm&&<div style={{background:C.white,borderRadius:16,padding:18,marginBottom:14,border:`2px solid ${C.green}`}}>
         <div style={{fontWeight:800,fontSize:14,color:C.text,marginBottom:14}}>口コミを投稿する</div>
-        <ReviewForm hospital={hospital} user={user} onClose={()=>setShowForm(false)} onSubmit={async (form)=>{
+        <ReviewForm hospital={hospital} user={user} doctorsData={doctorsData} onClose={()=>setShowForm(false)} onSubmit={async (form)=>{
           const ok = await onCreateReview?.(hospital, form);
           if (ok) setShowForm(false);
           return ok;
         }}/>
       </div>}
       <div style={{display:"flex",flexDirection:"column",gap:10}}>
-        {hospital.reviews.map(r=><ReviewCard key={r.id} review={r} onDoctorClick={onDoctorClick} onReport={(review)=>onReportReview?.(review, hospital)} onHelpful={onReviewHelpful} onReply={onReviewReply}/>)}
+        {hospital.reviews.map(r=><ReviewCard key={r.id} review={r} doctorsData={doctorsData} onDoctorClick={onDoctorClick} onReport={(review)=>onReportReview?.(review, hospital)} onHelpful={onReviewHelpful} onReply={onReviewReply}/>)}
       </div>
     </div>}
 
@@ -921,7 +924,7 @@ function MyPage({ user, favs, bookings, myReviews, onUnfav, onLogout, onHospital
 /* ═══════════════════════════════════════════
    CLINIC DASHBOARD
 ═══════════════════════════════════════════ */
-function ClinicDash({ user, clinicProfile, clinicHospital, clinicBookings, clinicReports, onSaveClinicProfile, onDoctorClick, onReviewReply }) {
+function ClinicDash({ user, clinicProfile, clinicHospital, clinicBookings, clinicReports, clinicDoctorsList, onSaveClinicProfile, onSaveDoctor, onDoctorClick, onReviewReply }) {
   const [f, setF] = useState(() => ({
     name: clinicProfile?.name || "",
     short: clinicProfile?.short || "",
@@ -941,6 +944,9 @@ function ClinicDash({ user, clinicProfile, clinicHospital, clinicBookings, clini
     online: !!clinicProfile?.online,
   }));
   const [saved, setSaved] = useState(false);
+  const [mapUrl, setMapUrl] = useState("");
+  const [docSaved, setDocSaved] = useState(false);
+  const [docF, setDocF] = useState({ name:"", title:"", dept:"内科", exp:5, specialties:"", bio:"", female:false, photo:"🧑‍⚕️" });
   useEffect(() => {
     setF({
       name: clinicProfile?.name || "",
@@ -964,6 +970,16 @@ function ClinicDash({ user, clinicProfile, clinicHospital, clinicBookings, clini
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
   const toggleDept = (d) => set("depts", f.depts.includes(d) ? f.depts.filter((x) => x !== d) : [...f.depts, d]);
   const toggleFlag = (k) => set(k, !f[k]);
+  const setDoc = (k, v) => setDocF((p) => ({ ...p, [k]: v }));
+  const applyMapUrl = () => {
+    const hit = mapUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || mapUrl.match(/q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (!hit) {
+      alert("GoogleマップURLから緯度経度を抽出できませんでした。");
+      return;
+    }
+    set("lat", Number(hit[1]));
+    set("lng", Number(hit[2]));
+  };
   const submit = () => {
     if (!f.name.trim() || !f.address.trim()) return;
     onSaveClinicProfile({
@@ -975,6 +991,27 @@ function ClinicDash({ user, clinicProfile, clinicHospital, clinicBookings, clini
     });
     setSaved(true);
     setTimeout(() => setSaved(false), 1600);
+  };
+  const submitDoctor = async () => {
+    if (!clinicProfile) {
+      alert("先に自院情報を保存してください。");
+      return;
+    }
+    if (!docF.name.trim() || !docF.title.trim()) return;
+    await onSaveDoctor?.({
+      hid: clinicProfile.id,
+      name: docF.name.trim(),
+      title: docF.title.trim(),
+      dept: docF.dept,
+      exp: Number(docF.exp) || 0,
+      specialties: docF.specialties.split(",").map((s) => s.trim()).filter(Boolean),
+      bio: docF.bio.trim(),
+      female: !!docF.female,
+      photo: docF.photo || "🧑‍⚕️",
+    });
+    setDocSaved(true);
+    setTimeout(() => setDocSaved(false), 1600);
+    setDocF({ name:"", title:"", dept:"内科", exp:5, specialties:"", bio:"", female:false, photo:"🧑‍⚕️" });
   };
 
   if (!user || user.role !== "clinic") {
@@ -1018,6 +1055,11 @@ function ClinicDash({ user, clinicProfile, clinicHospital, clinicBookings, clini
         <input value={f.lng} onChange={(e)=>set("lng", e.target.value)} placeholder="経度" style={{padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,...ff}} />
       </div>
       <input value={f.address} onChange={(e)=>set("address", e.target.value)} placeholder="住所" style={{marginTop:8,width:"100%",padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,boxSizing:"border-box",...ff}} />
+      <div style={{display:"flex",gap:8,marginTop:8}}>
+        <input value={mapUrl} onChange={(e)=>setMapUrl(e.target.value)} placeholder="GoogleマップURLを貼り付け（地点共有リンク）" style={{flex:1,padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,boxSizing:"border-box",...ff}} />
+        <Btn sm onClick={applyMapUrl}>座標反映</Btn>
+      </div>
+      <div style={{fontSize:11,color:C.textM,marginTop:4}}>Googleマップで病院地点を開いてURLを貼ると、緯度経度に反映されます</div>
       <textarea value={f.access} onChange={(e)=>set("access", e.target.value)} placeholder="アクセス情報" rows={2} style={{marginTop:8,width:"100%",padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,boxSizing:"border-box",resize:"none",...ff}} />
       <textarea value={f.desc} onChange={(e)=>set("desc", e.target.value)} placeholder="施設紹介" rows={3} style={{marginTop:8,width:"100%",padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,boxSizing:"border-box",resize:"none",...ff}} />
       <div style={{marginTop:8}}>
@@ -1036,6 +1078,33 @@ function ClinicDash({ user, clinicProfile, clinicHospital, clinicBookings, clini
         {saved && <span style={{fontSize:12,color:C.green,fontWeight:700}}>保存しました</span>}
       </div>
     </div>
+    <div style={{background:C.white,borderRadius:16,padding:14,marginBottom:14,border:`1px solid ${C.border}`}}>
+      <div style={{fontWeight:800,fontSize:13,color:C.text,marginBottom:12}}>医師情報の登録</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+        <input value={docF.name} onChange={(e)=>setDoc("name", e.target.value)} placeholder="氏名" style={{padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,...ff}} />
+        <input value={docF.title} onChange={(e)=>setDoc("title", e.target.value)} placeholder="役職・資格" style={{padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,...ff}} />
+        <select value={docF.dept} onChange={(e)=>setDoc("dept", e.target.value)} style={{padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,...ff}}>
+          {DEPT_OPTIONS.map((d)=><option key={d} value={d}>{d}</option>)}
+        </select>
+        <input type="number" value={docF.exp} onChange={(e)=>setDoc("exp", e.target.value)} placeholder="経験年数" style={{padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,...ff}} />
+      </div>
+      <input value={docF.specialties} onChange={(e)=>setDoc("specialties", e.target.value)} placeholder="専門分野（カンマ区切り）" style={{marginTop:8,width:"100%",padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,boxSizing:"border-box",...ff}} />
+      <textarea value={docF.bio} onChange={(e)=>setDoc("bio", e.target.value)} rows={3} placeholder="紹介文" style={{marginTop:8,width:"100%",padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,boxSizing:"border-box",resize:"none",...ff}} />
+      <div style={{display:"flex",gap:8,alignItems:"center",marginTop:8}}>
+        <Chip active={docF.female} onClick={()=>setDoc("female", !docF.female)}>👩‍⚕️ 女性医師</Chip>
+        <input value={docF.photo} onChange={(e)=>setDoc("photo", e.target.value)} placeholder="絵文字" style={{width:90,padding:"8px 10px",borderRadius:10,border:`1px solid ${C.border}`,fontSize:12,...ff}} />
+        <Btn sm onClick={submitDoctor}>医師を追加</Btn>
+        {docSaved && <span style={{fontSize:12,color:C.green,fontWeight:700}}>保存しました</span>}
+      </div>
+      <div style={{marginTop:10,display:"flex",flexDirection:"column",gap:8}}>
+        {clinicDoctorsList.length===0 ? <div style={{fontSize:12,color:C.textM}}>登録済み医師はまだありません</div> : clinicDoctorsList.map((d)=>(
+          <div key={d.id} style={{padding:"10px 12px",border:`1px solid ${C.border}`,borderRadius:12}}>
+            <div style={{fontSize:13,fontWeight:700,color:C.text}}>{d.photo} {d.name} 先生 {d.female&&<Badge green>女性医師</Badge>}</div>
+            <div style={{fontSize:11,color:C.textM,marginTop:2}}>{d.title} · {d.dept} · 経験{d.exp}年</div>
+          </div>
+        ))}
+      </div>
+    </div>
     <div style={{background:C.white,borderRadius:16,padding:14,border:`1px solid ${C.border}`}}>
       <div style={{fontWeight:800,fontSize:13,color:C.text,marginBottom:10}}>口コミ通報キュー</div>
       {clinicReports.length===0 ? <div style={{fontSize:12,color:C.textM}}>現在、通報はありません</div> : clinicReports.slice(0, 8).map((r)=>(
@@ -1047,7 +1116,7 @@ function ClinicDash({ user, clinicProfile, clinicHospital, clinicBookings, clini
     </div>
     {clinicProfile && <div style={{fontWeight:800,fontSize:13,color:C.text,margin:"14px 0 10px"}}>返信待ちの口コミ</div>}
     {clinicProfile && <div style={{display:"flex",flexDirection:"column",gap:8}}>
-      {clinicHospital?.reviews?.filter(r=>!r.reply).map(r=><ReviewCard key={r.id} review={r} onDoctorClick={onDoctorClick} clinicView onReply={onReviewReply}/>)}
+      {clinicHospital?.reviews?.filter(r=>!r.reply).map(r=><ReviewCard key={r.id} review={r} doctorsData={[...doctors, ...clinicDoctorsList]} onDoctorClick={onDoctorClick} clinicView onReply={onReviewReply}/>)}
     </div>}
   </div>;
 }
@@ -1084,6 +1153,7 @@ export default function App() {
   const [users, setUsers] = useState(() => readJSON(STORAGE_KEYS.users, []));
   const [bookings, setBookings] = useState(() => readJSON(STORAGE_KEYS.bookings, []));
   const [clinicProfiles, setClinicProfiles] = useState(() => readJSON(STORAGE_KEYS.clinicProfiles, []));
+  const [clinicDoctors, setClinicDoctors] = useState(() => readJSON(STORAGE_KEYS.clinicDoctors, []));
   const [reviewReports, setReviewReports] = useState(() => readJSON(STORAGE_KEYS.reviewReports, []));
   const [reviews, setReviews] = useState(() => readJSON(STORAGE_KEYS.reviews, []));
   const [mode, setMode] = useState("patient");
@@ -1118,8 +1188,10 @@ export default function App() {
       rating: Number.isFinite(avgRating) ? Number(avgRating.toFixed(1)) : h.rating,
     };
   });
+  const allDoctors = [...doctors, ...clinicDoctors];
   const clinicProfile = user?.role === "clinic" ? clinicProfiles.find((p) => p.ownerUserId === user.id) : null;
   const clinicHospital = clinicProfile ? allHospitals.find((h) => String(h.id) === String(clinicProfile.id)) : null;
+  const clinicDoctorsList = clinicProfile ? clinicDoctors.filter((d) => String(d.hid) === String(clinicProfile.id)) : [];
   const clinicBookings = clinicProfile ? bookings.filter((b) => String(b.hospitalId) === String(clinicProfile.id)) : [];
   const clinicReports = clinicProfile ? reviewReports.filter((r) => r.clinicId === String(clinicProfile.id)) : [];
 
@@ -1202,6 +1274,24 @@ export default function App() {
           reply: r.reply || undefined,
         }));
         setReviews(normalizedReviews);
+      }
+      const { data: cloudDoctors } = await listClinicDoctors();
+      if (cloudDoctors) {
+        const normalizedDoctors = cloudDoctors.map((d) => ({
+          id: d.id,
+          hid: d.clinic_id,
+          name: d.name,
+          title: d.title,
+          dept: d.dept,
+          exp: d.exp || 0,
+          specialties: d.specialties || [],
+          bio: d.bio || "",
+          rating: 0,
+          cnt: 0,
+          photo: d.photo || "🧑‍⚕️",
+          female: !!d.female,
+        }));
+        setClinicDoctors(normalizedDoctors);
       }
     })();
   }, []);
@@ -1616,6 +1706,35 @@ export default function App() {
     await logAction("clinic_profile_upsert", { clinicId: nextProfile.id });
   };
 
+  const saveClinicDoctor = async (payload) => {
+    if (!user || user.role !== "clinic") return;
+    const created = {
+      id: createId("doc"),
+      ...payload,
+      rating: 0,
+      cnt: 0,
+    };
+    const next = [created, ...clinicDoctors];
+    setClinicDoctors(next);
+    writeJSON(STORAGE_KEYS.clinicDoctors, next);
+    if (isSupabaseEnabled) {
+      await upsertClinicDoctor({
+        id: created.id,
+        clinic_id: String(created.hid),
+        owner_user_id: user.id,
+        name: created.name,
+        title: created.title,
+        dept: created.dept,
+        exp: Number(created.exp || 0),
+        specialties: created.specialties || [],
+        bio: created.bio || "",
+        photo: created.photo || "🧑‍⚕️",
+        female: !!created.female,
+      });
+    }
+    await logAction("clinic_doctor_upsert", { clinicId: String(created.hid), doctorName: created.name });
+  };
+
   const upgradeToClinicRole = async () => {
     if (!user) return;
     if (isSupabaseEnabled) {
@@ -1725,9 +1844,9 @@ export default function App() {
         ) : view==="mypage"&&user ? (
           <MyPage user={user} favs={favs} bookings={userBookings} myReviews={reviews.filter((r)=>r.uid===user.id)} onUnfav={id=>setFavs(p=>p.filter(f=>f.id!==id))} onLogout={async ()=>{await logAction("logout", {});await clearSession();setUser(null);setView("home");}} onHospitalClick={openHospital} onUpgradeToClinic={upgradeToClinicRole}/>
         ) : isClinic ? (
-          <ClinicDash user={user} clinicProfile={clinicProfile} clinicHospital={clinicHospital} clinicBookings={clinicBookings} clinicReports={clinicReports} onSaveClinicProfile={saveClinicProfile} onDoctorClick={setDocModal} onReviewReply={handleReviewReply}/>
+          <ClinicDash user={user} clinicProfile={clinicProfile} clinicHospital={clinicHospital} clinicBookings={clinicBookings} clinicReports={clinicReports} clinicDoctorsList={clinicDoctorsList} onSaveClinicProfile={saveClinicProfile} onSaveDoctor={saveClinicDoctor} onDoctorClick={setDocModal} onReviewReply={handleReviewReply}/>
         ) : view==="detail"&&selected ? (
-          <HospitalDetail hospital={allHospitals.find((h)=>String(h.id)===String(selected.id)) || selected} onBack={()=>{setSelected(null);setView("home");}} onDoctorClick={setDocModal} isFav={isFav(selected)} onFavToggle={toggleFav} user={user} onCreateBooking={createBooking} onRequireLogin={()=>setShowAuth(true)} onReportReview={reportReview} onCreateReview={createReview} onReviewHelpful={handleReviewHelpful} onReviewReply={handleReviewReply}/>
+          <HospitalDetail hospital={allHospitals.find((h)=>String(h.id)===String(selected.id)) || selected} doctorsData={allDoctors} onBack={()=>{setSelected(null);setView("home");}} onDoctorClick={setDocModal} isFav={isFav(selected)} onFavToggle={toggleFav} user={user} onCreateBooking={createBooking} onRequireLogin={()=>setShowAuth(true)} onReportReview={reportReview} onCreateReview={createReview} onReviewHelpful={handleReviewHelpful} onReviewReply={handleReviewReply}/>
         ) : (
           <div>
             {/* Map */}
