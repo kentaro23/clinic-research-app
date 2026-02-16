@@ -56,6 +56,10 @@ export const insertReview = async (review) => {
   return supabase.from("reviews").insert(review).select().single();
 };
 
+export const updateReview = async (id, patch) => {
+  return supabase.from("reviews").update(patch).eq("id", id).select().single();
+};
+
 export const insertReviewReport = async (report) => {
   return supabase.from("review_reports").insert(report);
 };
