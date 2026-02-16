@@ -1,5 +1,28 @@
 import { useState, useEffect, useRef } from "react";
 
+const STORAGE_KEYS = {
+  users: "clinic_app_users_v1",
+  session: "clinic_app_session_v1",
+  bookings: "clinic_app_bookings_v1",
+  favorites: "clinic_app_favorites_v1",
+};
+
+const readJSON = (key, fallback) => {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+const writeJSON = (key, value) => {
+  localStorage.setItem(key, JSON.stringify(value));
+};
+
+const passHash = (pass) => btoa(unescape(encodeURIComponent(`clinic::${pass}`)));
+const createId = (prefix) => `${prefix}_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+
 /* ═══════════════════════════════════════════
    DATA
 ═══════════════════════════════════════════ */
@@ -225,7 +248,7 @@ function MapView({ hospitals, onSelect }) {
 /* ═══════════════════════════════════════════
    ONLINE CONSULTATION UI
 ═══════════════════════════════════════════ */
-function OnlineConsult({ hospital, user, onClose }) {
+function OnlineConsult({ hospital, user, onCreateBooking, onRequireLogin }) {
   const [step, setStep] = useState(1);
   const [concern, setConcern] = useState("");
   const [time, setTime] = useState("");
@@ -238,6 +261,25 @@ function OnlineConsult({ hospital, user, onClose }) {
     <p style={{fontSize:13,color:C.textS}}>{time} にビデオ通話でつながります</p>
     <p style={{fontSize:12,color:C.textM,marginTop:8}}>確認メールとリマインダーをお送りしました</p>
   </div>;
+
+  const confirmOnlineBooking = () => {
+    if (!user) {
+      onRequireLogin?.();
+      return;
+    }
+    if (!time) return;
+    onCreateBooking?.({
+      type: "online",
+      hospitalId: hospital.id,
+      hospitalName: hospital.name,
+      date: new Date().toISOString().slice(0, 10),
+      time,
+      dept: hospital.depts[0],
+      status: "確定",
+      concern,
+    });
+    setDone(true);
+  };
 
   return <div>
     <div style={{padding:"12px 14px",background:"#eff6ff",borderRadius:12,marginBottom:16,border:"1px solid #bfdbfe",display:"flex",gap:10,alignItems:"flex-start"}}>
@@ -261,7 +303,8 @@ function OnlineConsult({ hospital, user, onClose }) {
       <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:16}}>
         {slots.map(s=><button key={s} onClick={()=>setTime(s)} style={{padding:"10px 16px",borderRadius:12,border:`2px solid ${time===s?C.green:C.border}`,background:time===s?C.greenLL:C.white,color:time===s?C.greenD:C.text,fontSize:13,fontWeight:700,cursor:"pointer",...ff}}>{s}</button>)}
       </div>
-      <Btn onClick={()=>time&&setDone(true)} disabled={!time} style={{width:"100%",padding:12,borderRadius:14,fontSize:14}}>💻 オンライン診療を予約する</Btn>
+      {!user && <div style={{padding:"10px 13px",background:"#fef3c7",borderRadius:12,border:"1px solid #fcd34d",fontSize:12,color:"#92400e",marginBottom:10}}>ログインすると予約を確定できます</div>}
+      <Btn onClick={confirmOnlineBooking} disabled={!time} style={{width:"100%",padding:12,borderRadius:14,fontSize:14}}>💻 オンライン診療を予約する</Btn>
     </div>}
   </div>;
 }
@@ -269,12 +312,29 @@ function OnlineConsult({ hospital, user, onClose }) {
 /* ═══════════════════════════════════════════
    BOOKING MODAL
 ═══════════════════════════════════════════ */
-function Booking({ hospital, onClose }) {
+function Booking({ hospital, user, onCreateBooking, onRequireLogin }) {
   const [dept, setDept] = useState(hospital.depts[0]);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [done, setDone] = useState(false);
   const times = ["08:30","09:00","09:30","10:00","10:30","11:00","14:00","14:30","15:00","15:30","16:00","16:30"];
+  const confirmBooking = () => {
+    if (!user) {
+      onRequireLogin?.();
+      return;
+    }
+    if (!date || !time) return;
+    onCreateBooking?.({
+      type: "visit",
+      hospitalId: hospital.id,
+      hospitalName: hospital.name,
+      date,
+      time,
+      dept,
+      status: "確定",
+    });
+    setDone(true);
+  };
   if (done) return <div style={{textAlign:"center",padding:"36px 0"}}>
     <div style={{fontSize:52,marginBottom:14}}>📅✅</div>
     <p style={{fontWeight:900,fontSize:17,color:C.text,marginBottom:4}}>予約が確定しました！</p>
@@ -290,18 +350,43 @@ function Booking({ hospital, onClose }) {
     <div><label style={{fontSize:12,fontWeight:700,color:"#374151",display:"block",marginBottom:7}}>時間帯</label>
     <div style={{display:"flex",flexWrap:"wrap",gap:6}}>{times.map(t=><Chip key={t} active={time===t} onClick={()=>setTime(t)}>{t}</Chip>)}</div></div>
     <div style={{padding:"10px 13px",background:"#eff6ff",borderRadius:12,border:"1px solid #bfdbfe",fontSize:12,color:C.blue}}>ℹ️ 前日18時にリマインドメールをお送りします</div>
-    <Btn onClick={()=>date&&time&&setDone(true)} disabled={!date||!time} style={{width:"100%",padding:13,borderRadius:14,fontSize:14}}>📅 予約を確定する</Btn>
+    {!user && <div style={{padding:"10px 13px",background:"#fef3c7",borderRadius:12,border:"1px solid #fcd34d",fontSize:12,color:"#92400e"}}>ログインすると予約を確定できます</div>}
+    <Btn onClick={confirmBooking} disabled={!date||!time} style={{width:"100%",padding:13,borderRadius:14,fontSize:14}}>📅 予約を確定する</Btn>
   </div>;
 }
 
 /* ═══════════════════════════════════════════
    AUTH
 ═══════════════════════════════════════════ */
-function Auth({ onLogin, onClose }) {
+function Auth({ onLogin, onSignup, onSocialLogin, onClose }) {
   const [tab, setTab] = useState("login");
   const [email, setEmail] = useState(""); const [pass, setPass] = useState(""); const [name, setName] = useState(""); const [role, setRole] = useState("patient");
+  const [err, setErr] = useState("");
   const inp = {width:"100%",padding:"11px 14px",borderRadius:12,border:`1.5px solid ${C.border}`,fontSize:13,outline:"none",boxSizing:"border-box",...ff};
-  const mock = () => onLogin({ name:name||"テストユーザー", email:email||"test@example.com", role, photo:"👤" });
+  const submit = () => {
+    setErr("");
+    const payload = { name, email: email.trim(), pass, role };
+    const res = tab === "login" ? onLogin?.(payload) : onSignup?.(payload);
+    if (!res?.ok) {
+      setErr(res?.error || "認証に失敗しました");
+      return;
+    }
+    onClose?.();
+  };
+  const social = (provider) => {
+    setErr("");
+    const res = onSocialLogin?.({
+      provider,
+      name,
+      email: email.trim(),
+      role,
+    });
+    if (!res?.ok) {
+      setErr(res?.error || "ログインに失敗しました");
+      return;
+    }
+    onClose?.();
+  };
   return <div style={{position:"fixed",inset:0,zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}}>
     <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.5)",backdropFilter:"blur(5px)"}} onClick={onClose}/>
     <div style={{position:"relative",width:"100%",maxWidth:380,background:C.white,borderRadius:24,padding:28,boxShadow:"0 24px 80px rgba(0,0,0,.25)"}}>
@@ -317,7 +402,7 @@ function Auth({ onLogin, onClose }) {
       </div>
       <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:18}}>
         {[["🔵 Googleでログイン","#4285f4"],["⬛ Appleでログイン","#111827"]].map(([l,c])=>(
-          <button key={l} onClick={mock} style={{padding:"11px",borderRadius:12,border:`1.5px solid ${C.border}`,background:C.white,fontSize:13,fontWeight:700,color:c,cursor:"pointer",...ff,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>{l}</button>
+          <button key={l} onClick={()=>social(l.includes("Google") ? "google" : "apple")} style={{padding:"11px",borderRadius:12,border:`1.5px solid ${C.border}`,background:C.white,fontSize:13,fontWeight:700,color:c,cursor:"pointer",...ff,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>{l}</button>
         ))}
       </div>
       <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:18}}><div style={{flex:1,height:1,background:C.border}}/><span style={{fontSize:11,color:C.textM}}>メールで登録</span><div style={{flex:1,height:1,background:C.border}}/></div>
@@ -332,7 +417,8 @@ function Auth({ onLogin, onClose }) {
         </>}
         <input placeholder="メールアドレス" value={email} onChange={e=>setEmail(e.target.value)} style={inp} onFocus={e=>e.target.style.borderColor=C.green} onBlur={e=>e.target.style.borderColor=C.border}/>
         <input placeholder="パスワード" type="password" value={pass} onChange={e=>setPass(e.target.value)} style={inp} onFocus={e=>e.target.style.borderColor=C.green} onBlur={e=>e.target.style.borderColor=C.border}/>
-        <Btn onClick={mock} style={{width:"100%",padding:12,borderRadius:14,fontSize:14}}>{tab==="login"?"ログイン →":"アカウントを作成 →"}</Btn>
+        {err && <div style={{fontSize:12,color:C.red,background:"#fee2e2",border:"1px solid #fecaca",padding:"8px 10px",borderRadius:10}}>{err}</div>}
+        <Btn onClick={submit} style={{width:"100%",padding:12,borderRadius:14,fontSize:14}}>{tab==="login"?"ログイン →":"アカウントを作成 →"}</Btn>
       </div>
     </div>
   </div>;
@@ -341,12 +427,17 @@ function Auth({ onLogin, onClose }) {
 /* ═══════════════════════════════════════════
    NOTIFICATION PANEL
 ═══════════════════════════════════════════ */
-function NotifPanel({ onClose }) {
-  const notifs = [
-    { id:1, icon:"📅", title:"予約リマインダー", body:"明日 10:00 東京中央メディカルセンター（内科）の予約があります", time:"1時間前", unread:true },
-    { id:2, icon:"💬", title:"口コミへの返信", body:"東京中央メディカルセンターが口コミに返信しました", time:"昨日", unread:true },
-    { id:3, icon:"🆕", title:"新着口コミ", body:"お気に入りの渋谷ファミリークリニックに新しい口コミが投稿されました", time:"2日前", unread:false },
-    { id:4, icon:"✅", title:"予約確定", body:"渋谷ファミリークリニック（小児科）の予約が確定しました", time:"3日前", unread:false },
+function NotifPanel({ bookings = [] }) {
+  const bookingNotifs = bookings.slice(0, 5).map((b) => ({
+    id: b.id,
+    icon: "✅",
+    title: "予約確定",
+    body: `${b.hospitalName}（${b.dept}） ${b.date} ${b.time} の予約が確定しました`,
+    time: "最新",
+    unread: true,
+  }));
+  const notifs = bookingNotifs.length > 0 ? bookingNotifs : [
+    { id:"empty", icon:"ℹ️", title:"お知らせ", body:"まだ通知はありません", time:"", unread:false },
   ];
   return <div>
     {notifs.map(n=><div key={n.id} style={{display:"flex",gap:12,padding:"12px 0",borderBottom:`1px solid ${C.grayL}`,alignItems:"flex-start"}}>
@@ -517,7 +608,7 @@ function HospitalCard({ h, onClick, isFav, onFavToggle, user }) {
 /* ═══════════════════════════════════════════
    HOSPITAL DETAIL
 ═══════════════════════════════════════════ */
-function HospitalDetail({ hospital, onBack, onDoctorClick, isFav, onFavToggle, user }) {
+function HospitalDetail({ hospital, onBack, onDoctorClick, isFav, onFavToggle, user, onCreateBooking, onRequireLogin }) {
   const [tab, setTab] = useState("reviews");
   const [showForm, setShowForm] = useState(false);
   const [modal, setModal] = useState(null); // "book" | "online"
@@ -525,8 +616,8 @@ function HospitalDetail({ hospital, onBack, onDoctorClick, isFav, onFavToggle, u
   const avg = k=>hospital.reviews.reduce((a,r)=>a+r[k],0)/hospital.reviews.length;
 
   return <div>
-    {modal==="book"&&<Sheet title="📅 ネット予約" onClose={()=>setModal(null)}><Booking hospital={hospital} onClose={()=>setModal(null)}/></Sheet>}
-    {modal==="online"&&<Sheet title="💻 オンライン診療" onClose={()=>setModal(null)}><OnlineConsult hospital={hospital} user={user} onClose={()=>setModal(null)}/></Sheet>}
+    {modal==="book"&&<Sheet title="📅 ネット予約" onClose={()=>setModal(null)}><Booking hospital={hospital} user={user} onCreateBooking={onCreateBooking} onRequireLogin={onRequireLogin}/></Sheet>}
+    {modal==="online"&&<Sheet title="💻 オンライン診療" onClose={()=>setModal(null)}><OnlineConsult hospital={hospital} user={user} onCreateBooking={onCreateBooking} onRequireLogin={onRequireLogin}/></Sheet>}
 
     {/* Hero */}
     <div style={{background:"linear-gradient(135deg,#059669,#064e3b)",borderRadius:20,padding:20,marginBottom:14,position:"relative",overflow:"hidden"}}>
@@ -679,9 +770,10 @@ function DoctorProfile({ doc }) {
 /* ═══════════════════════════════════════════
    MYPAGE
 ═══════════════════════════════════════════ */
-function MyPage({ user, favs, onUnfav, onLogout, onHospitalClick }) {
+function MyPage({ user, favs, bookings, onUnfav, onLogout, onHospitalClick }) {
   const [tab, setTab] = useState("fav");
-  const myRevs = hospitals.flatMap(h=>h.reviews.filter(r=>r.uid==="u1"));
+  const myRevs = hospitals.flatMap(h=>h.reviews.filter(r=>r.uid===user.id));
+  const sortedBookings = [...bookings].sort((a, b) => (a.date + a.time < b.date + b.time ? 1 : -1));
   return <div>
     <div style={{background:G,borderRadius:20,padding:20,marginBottom:14,color:C.white}}>
       <div style={{display:"flex",gap:14,alignItems:"center"}}>
@@ -695,7 +787,7 @@ function MyPage({ user, favs, onUnfav, onLogout, onHospitalClick }) {
       </div>
     </div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
-      {[{l:"お気に入り",v:favs.length,i:"❤️"},{l:"投稿口コミ",v:myRevs.length,i:"✏️"},{l:"予約件数",v:2,i:"📅"}].map(({l,v,i})=>(
+      {[{l:"お気に入り",v:favs.length,i:"❤️"},{l:"投稿口コミ",v:myRevs.length,i:"✏️"},{l:"予約件数",v:bookings.length,i:"📅"}].map(({l,v,i})=>(
         <div key={l} style={{background:C.white,borderRadius:14,padding:12,border:`1px solid ${C.border}`,textAlign:"center"}}>
           <div style={{fontSize:20,marginBottom:4}}>{i}</div>
           <div style={{fontSize:20,fontWeight:900,color:C.text}}>{v}</div>
@@ -725,13 +817,13 @@ function MyPage({ user, favs, onUnfav, onLogout, onHospitalClick }) {
       </div>)
     )}
     {tab==="bookings"&&<div>
-      {[{h:"東京中央メディカルセンター",d:"2025-02-18",t:"10:00",dept:"内科",status:"確定"},{h:"渋谷ファミリークリニック",d:"2025-01-30",t:"14:30",dept:"小児科",status:"受診済"}].map((b,i)=>(
-        <div key={i} style={{background:C.white,borderRadius:14,padding:14,border:`1px solid ${C.border}`,marginBottom:8}}>
+      {sortedBookings.length===0 ? <div style={{textAlign:"center",padding:"32px",color:C.textM}}><div style={{fontSize:36,marginBottom:10}}>📅</div><div style={{fontWeight:700}}>予約履歴はまだありません</div></div> : sortedBookings.map((b)=>(
+        <div key={b.id} style={{background:C.white,borderRadius:14,padding:14,border:`1px solid ${C.border}`,marginBottom:8}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
-            <div style={{fontWeight:700,fontSize:13,color:C.text}}>{b.h}</div>
+            <div style={{fontWeight:700,fontSize:13,color:C.text}}>{b.hospitalName}</div>
             <Badge green={b.status==="確定"} gold={b.status==="受診済"}>{b.status}</Badge>
           </div>
-          <div style={{fontSize:12,color:C.textS}}>📅 {b.d} {b.t} · {b.dept}</div>
+          <div style={{fontSize:12,color:C.textS}}>📅 {b.date} {b.time} · {b.dept} {b.type==="online" ? "· オンライン" : "· 来院"}</div>
         </div>
       ))}
     </div>}
@@ -793,6 +885,8 @@ function ClinicDash({ onDoctorClick }) {
    MAIN APP
 ═══════════════════════════════════════════ */
 export default function App() {
+  const [users, setUsers] = useState(() => readJSON(STORAGE_KEYS.users, []));
+  const [bookings, setBookings] = useState(() => readJSON(STORAGE_KEYS.bookings, []));
   const [mode, setMode] = useState("patient");
   const [view, setView] = useState("home");
   const [search, setSearch] = useState("");
@@ -809,14 +903,112 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [favs, setFavs] = useState([]);
   const [mounted, setMounted] = useState(false);
-  const [notifCount] = useState(2);
   const isClinic = mode==="clinic";
 
   useEffect(()=>{setTimeout(()=>setMounted(true),80);},[]);
+  useEffect(() => {
+    const session = readJSON(STORAGE_KEYS.session, null);
+    if (!session?.userId) return;
+    const hit = users.find((u) => u.id === session.userId);
+    if (!hit) return;
+    setUser({ id: hit.id, name: hit.name, email: hit.email, role: hit.role, photo: hit.photo });
+  }, [users]);
+
+  useEffect(() => {
+    if (!user) {
+      setFavs([]);
+      return;
+    }
+    const favoriteMap = readJSON(STORAGE_KEYS.favorites, {});
+    const ids = favoriteMap[user.id] || [];
+    setFavs(hospitals.filter((h) => ids.includes(h.id)));
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    const favoriteMap = readJSON(STORAGE_KEYS.favorites, {});
+    favoriteMap[user.id] = favs.map((f) => f.id);
+    writeJSON(STORAGE_KEYS.favorites, favoriteMap);
+  }, [favs, user]);
 
   const toggleF = k=>setActiveF(p=>p.includes(k)?p.filter(x=>x!==k):[...p,k]);
   const toggleFav = h=>setFavs(p=>p.find(f=>f.id===h.id)?p.filter(f=>f.id!==h.id):[...p,h]);
   const isFav = h=>!!favs.find(f=>f.id===h.id);
+  const userBookings = user ? bookings.filter((b) => b.userId === user.id) : [];
+  const notifCount = Math.min(userBookings.length, 9);
+
+  const saveSession = (uid) => writeJSON(STORAGE_KEYS.session, { userId: uid });
+  const clearSession = () => localStorage.removeItem(STORAGE_KEYS.session);
+  const toClientUser = (u) => ({ id: u.id, name: u.name, email: u.email, role: u.role, photo: u.photo });
+
+  const signup = ({ name, email, pass, role }) => {
+    if (!name.trim()) return { ok: false, error: "お名前を入力してください" };
+    if (!email.includes("@")) return { ok: false, error: "正しいメールアドレスを入力してください" };
+    if (pass.length < 6) return { ok: false, error: "パスワードは6文字以上にしてください" };
+    if (users.some((u) => u.email.toLowerCase() === email.toLowerCase())) return { ok: false, error: "このメールアドレスは既に登録済みです" };
+    const created = {
+      id: createId("u"),
+      name: name.trim(),
+      email: email.toLowerCase(),
+      passHash: passHash(pass),
+      role,
+      photo: role === "clinic" ? "🏥" : "👤",
+      createdAt: new Date().toISOString(),
+    };
+    const nextUsers = [...users, created];
+    setUsers(nextUsers);
+    writeJSON(STORAGE_KEYS.users, nextUsers);
+    saveSession(created.id);
+    setUser(toClientUser(created));
+    return { ok: true };
+  };
+
+  const login = ({ email, pass }) => {
+    const target = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+    if (!target) return { ok: false, error: "ユーザーが見つかりません" };
+    if (target.passHash !== passHash(pass)) return { ok: false, error: "メールアドレスまたはパスワードが違います" };
+    saveSession(target.id);
+    setUser(toClientUser(target));
+    return { ok: true };
+  };
+
+  const socialLogin = ({ provider, name, email, role }) => {
+    const normalizedEmail = (email || `${provider}-${Date.now()}@example.com`).toLowerCase();
+    const existing = users.find((u) => u.email === normalizedEmail);
+    if (existing) {
+      saveSession(existing.id);
+      setUser(toClientUser(existing));
+      return { ok: true };
+    }
+    const created = {
+      id: createId("u"),
+      name: name?.trim() || (provider === "google" ? "Googleユーザー" : "Appleユーザー"),
+      email: normalizedEmail,
+      passHash: passHash(createId("social")),
+      role,
+      photo: role === "clinic" ? "🏥" : "👤",
+      createdAt: new Date().toISOString(),
+    };
+    const nextUsers = [...users, created];
+    setUsers(nextUsers);
+    writeJSON(STORAGE_KEYS.users, nextUsers);
+    saveSession(created.id);
+    setUser(toClientUser(created));
+    return { ok: true };
+  };
+
+  const createBooking = (payload) => {
+    if (!user) return;
+    const nextBooking = {
+      id: createId("bk"),
+      userId: user.id,
+      createdAt: new Date().toISOString(),
+      ...payload,
+    };
+    const next = [nextBooking, ...bookings];
+    setBookings(next);
+    writeJSON(STORAGE_KEYS.bookings, next);
+  };
 
   const filtered = hospitals
     .filter(h=>{
@@ -833,13 +1025,13 @@ export default function App() {
   return (
     <div style={{...ff,minHeight:"100vh",background:"#f1f5f9"}}>
       {/* Auth */}
-      {showAuth&&<Auth onLogin={u=>{setUser(u);setShowAuth(false);}} onClose={()=>setShowAuth(false)}/>}
+      {showAuth&&<Auth onLogin={login} onSignup={signup} onSocialLogin={socialLogin} onClose={()=>setShowAuth(false)}/>}
 
       {/* Doctor modal */}
       {docModal&&<Sheet title="医師プロフィール" onClose={()=>setDocModal(null)}><DoctorProfile doc={docModal}/></Sheet>}
 
       {/* Notif panel */}
-      {showNotif&&<Sheet title="🔔 通知" onClose={()=>setShowNotif(false)}><NotifPanel onClose={()=>setShowNotif(false)}/></Sheet>}
+      {showNotif&&<Sheet title="🔔 通知" onClose={()=>setShowNotif(false)}><NotifPanel bookings={userBookings}/></Sheet>}
 
       {/* HEADER */}
       <div style={{background:isClinic?GB:G,transition:"background .4s",position:"sticky",top:0,zIndex:500}}>
@@ -904,11 +1096,11 @@ export default function App() {
       {/* BODY */}
       <div style={{maxWidth:680,margin:"0 auto",padding:"16px 16px 80px"}}>
         {view==="mypage"&&user ? (
-          <MyPage user={user} favs={favs} onUnfav={id=>setFavs(p=>p.filter(f=>f.id!==id))} onLogout={()=>{setUser(null);setView("home");}} onHospitalClick={openHospital}/>
+          <MyPage user={user} favs={favs} bookings={userBookings} onUnfav={id=>setFavs(p=>p.filter(f=>f.id!==id))} onLogout={()=>{clearSession();setUser(null);setView("home");}} onHospitalClick={openHospital}/>
         ) : isClinic ? (
           <ClinicDash onDoctorClick={setDocModal}/>
         ) : view==="detail"&&selected ? (
-          <HospitalDetail hospital={selected} onBack={()=>{setSelected(null);setView("home");}} onDoctorClick={setDocModal} isFav={isFav(selected)} onFavToggle={toggleFav} user={user}/>
+          <HospitalDetail hospital={selected} onBack={()=>{setSelected(null);setView("home");}} onDoctorClick={setDocModal} isFav={isFav(selected)} onFavToggle={toggleFav} user={user} onCreateBooking={createBooking} onRequireLogin={()=>setShowAuth(true)}/>
         ) : (
           <div>
             {/* Map */}
