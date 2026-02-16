@@ -180,15 +180,15 @@ const toHospitalFromProfile = (profile) => ({
    DESIGN SYSTEM
 ═══════════════════════════════════════════ */
 const C = {
-  green:"#059669", greenD:"#064e3b", greenL:"#d1fae5", greenLL:"#ecfdf5",
-  blue:"#1e40af", blueD:"#1e3a8a", blueL:"#dbeafe",
-  gold:"#f59e0b", red:"#ef4444", gray:"#6b7280", grayL:"#f3f4f6",
-  text:"#111827", textS:"#4b5563", textM:"#9ca3af",
+  green:"#0f766e", greenD:"#0b4f4a", greenL:"#99f6e4", greenLL:"#ecfeff",
+  blue:"#0f3b8a", blueD:"#102a63", blueL:"#dbeafe",
+  gold:"#d97706", red:"#dc2626", gray:"#64748b", grayL:"#f1f5f9",
+  text:"#0f172a", textS:"#334155", textM:"#94a3b8",
   white:"white", border:"#e5e7eb",
 };
-const G = `linear-gradient(135deg,${C.green},${C.greenD})`;
-const GB = `linear-gradient(135deg,${C.blue},${C.blueD})`;
-const ff = { fontFamily:"'Hiragino Kaku Gothic Pro','ヒラギノ角ゴ Pro W3',YuGothic,'Yu Gothic',Meiryo,sans-serif" };
+const G = `linear-gradient(135deg,#0f766e 0%,#0b4f4a 55%,#134e4a 100%)`;
+const GB = `linear-gradient(135deg,#102a63 0%,#0f3b8a 60%,#1d4ed8 100%)`;
+const ff = { fontFamily:"'Manrope','Noto Sans JP','Hiragino Kaku Gothic Pro','Yu Gothic',Meiryo,sans-serif" };
 
 /* ═══════════════════════════════════════════
    ATOMS
@@ -219,7 +219,7 @@ function Chip({ children, active, onClick, blue, sm, color }) {
   const bg = active ? (blue?"#eff6ff":color?"#fef3c7":C.greenLL) : C.grayL;
   const clr = active ? (blue?C.blue:color?"#92400e":C.greenD) : C.gray;
   const bdr = active ? (blue?"1px solid #93c5fd":color?"1px solid #fcd34d":`1px solid ${C.greenL}`) : "1px solid transparent";
-  return <button onClick={onClick} style={{fontSize:sm?10:11,fontWeight:600,padding:sm?"3px 8px":"4px 11px",borderRadius:99,background:bg,color:clr,border:bdr,cursor:onClick?"pointer":"default",transition:"all .15s",...ff}}>{children}</button>;
+  return <button onClick={onClick} style={{fontSize:sm?10:11,fontWeight:700,padding:sm?"4px 9px":"5px 12px",borderRadius:99,background:bg,color:clr,border:bdr,cursor:onClick?"pointer":"default",transition:"all .18s",boxShadow:active?"0 2px 8px rgba(15,23,42,.08)":"none",...ff}}>{children}</button>;
 }
 function Av({ text, size=36, bg=G, emoji }) {
   return <div style={{width:size,height:size,borderRadius:"50%",background:bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:emoji?size*.46:size*.4,fontWeight:800,color:"white",flexShrink:0}}>{emoji||text}</div>;
@@ -228,7 +228,8 @@ function Btn({ children, onClick, style={}, variant="green", sm, disabled }) {
   const bg = variant==="green"?G:variant==="blue"?GB:variant==="outline"?C.white:variant==="ghost"?"transparent":C.grayL;
   const clr = (variant==="outline"||variant==="gray"||variant==="ghost") ? C.text : C.white;
   const bdr = variant==="outline"?`1.5px solid ${C.border}`:variant==="ghost"?"none":"none";
-  return <button onClick={onClick} disabled={disabled} style={{padding:sm?"7px 14px":"11px 20px",borderRadius:99,border:bdr,background:bg,color:clr,fontSize:sm?11:13,fontWeight:700,cursor:disabled?"not-allowed":"pointer",opacity:disabled?.5:1,transition:"all .15s",...ff,...style}}>{children}</button>;
+  const sh = variant==="green"||variant==="blue" ? "0 10px 20px rgba(15,23,42,.16)" : "0 3px 10px rgba(15,23,42,.08)";
+  return <button onClick={onClick} disabled={disabled} style={{padding:sm?"7px 14px":"11px 20px",borderRadius:99,border:bdr,background:bg,color:clr,fontSize:sm?11:13,fontWeight:800,cursor:disabled?"not-allowed":"pointer",opacity:disabled?.5:1,transition:"all .18s",boxShadow:sh,letterSpacing:".01em",...ff,...style}}>{children}</button>;
 }
 function Badge({ children, green, blue, gold }) {
   const bg = green?C.greenLL:blue?C.blueL:gold?"#fef3c7":C.grayL;
@@ -1801,7 +1802,8 @@ export default function App() {
   const compareItems = allHospitals.filter((h) => compareIds.includes(h.id));
 
   return (
-    <div style={{...ff,minHeight:"100vh",background:"#f1f5f9"}}>
+    <div style={{...ff,minHeight:"100vh",background:"transparent",position:"relative"}}>
+      <div style={{position:"fixed",inset:0,pointerEvents:"none",background:"radial-gradient(700px 240px at 20% 0%,rgba(15,118,110,.10),transparent 70%),radial-gradient(620px 240px at 85% 0%,rgba(15,59,138,.10),transparent 72%)"}} />
       {/* Auth */}
       {showAuth&&<Auth onLogin={login} onSignup={signup} onSocialLogin={socialLogin} onClose={()=>setShowAuth(false)}/>}
 
@@ -1812,8 +1814,8 @@ export default function App() {
       {showNotif&&<Sheet title="🔔 通知" onClose={()=>setShowNotif(false)}><NotifPanel bookings={userBookings}/></Sheet>}
 
       {/* HEADER */}
-      <div style={{background:isClinic?GB:G,transition:"background .4s",position:"sticky",top:0,zIndex:500}}>
-        <div style={{maxWidth:680,margin:"0 auto",padding:"12px 16px 0"}}>
+      <div style={{background:isClinic?GB:G,transition:"background .4s",position:"sticky",top:0,zIndex:500,backdropFilter:"blur(10px)",boxShadow:"0 8px 24px rgba(15,23,42,.16)"}}>
+        <div style={{maxWidth:760,margin:"0 auto",padding:"14px 18px 0"}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
             <button onClick={()=>{setView("home");setSelected(null);setLegalPage(null);}} style={{display:"flex",alignItems:"center",gap:7,background:"none",border:"none",cursor:"pointer",...ff}}>
               <span style={{fontSize:18}}>🏥</span>
@@ -1872,7 +1874,7 @@ export default function App() {
       </div>
 
       {/* BODY */}
-      <div style={{maxWidth:680,margin:"0 auto",padding:"16px 16px 80px"}}>
+      <div style={{maxWidth:760,margin:"0 auto",padding:"18px 18px 86px",position:"relative",zIndex:1}}>
         {legalPage ? (
           <LegalPage type={legalPage} onBack={()=>setLegalPage(null)} />
         ) : view==="mypage"&&user ? (
